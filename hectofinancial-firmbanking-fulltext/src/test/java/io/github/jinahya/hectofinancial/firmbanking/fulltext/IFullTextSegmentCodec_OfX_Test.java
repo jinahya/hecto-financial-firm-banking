@@ -46,7 +46,7 @@ class IFullTextSegmentCodec_OfX_Test
         assertThat(decoded).isEqualTo("1");
     }
 
-    @DisplayName("공통부/식별코드")
+    @DisplayName("공통부/1/식별코드/X(9)")
     @Test
     void 공통부_식별코드() {
         final String decoded = "SETTLEBNK"; // mind the spelling
@@ -57,7 +57,17 @@ class IFullTextSegmentCodec_OfX_Test
         assertThat(newCodecInstance().decode(encoded, length)).isEqualTo(decoded);
     }
 
-    @DisplayName("공통부/전문구분코드")
+    @DisplayName("공통부/3/은행코드/9(3)")
+    @Test
+    void 공통부_은행코드() {
+        final String decoded = "002"; // 산업은행
+        final int length = 3;
+        final byte[] encoded = newCodecInstance().encode(decoded, length);
+        log.debug("decoded: {}, encoded: {}", decoded, encoded);
+        assertThat(newCodecInstance().decode(encoded, length)).isEqualTo(decoded);
+    }
+
+    @DisplayName("공통부/4/전문구분코드/X(3)")
     @Test
     void 공통부_전문구분코드() {
         final String decoded = "1000";
@@ -68,7 +78,7 @@ class IFullTextSegmentCodec_OfX_Test
         assertThat(newCodecInstance().decode(encoded, length)).isEqualTo(decoded);
     }
 
-    @DisplayName("공통부/업무구분코드")
+    @DisplayName("공통부/5/업무구분코드/X(3)")
     @Test
     void 공통부_업무구분코드() {
         final String decoded = "100";
@@ -79,7 +89,7 @@ class IFullTextSegmentCodec_OfX_Test
         assertThat(newCodecInstance().decode(encoded, length)).isEqualTo(decoded);
     }
 
-    @DisplayName("공통부/응답코드/X(4)")
+    @DisplayName("공통부/10/응답코드/X(4)")
     @Test
     void 공통부_응답코드() {
         final String decoded = "0000";

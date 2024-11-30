@@ -17,9 +17,10 @@ class IFullTextSegmentCodecOf9
         if (length <= 0) {
             throw new IllegalArgumentException("length(" + length + ") is not positive");
         }
-        final var bytes = String.format(String.format("%%1$0%1$dd", length), decoded.intValue()).getBytes(CHARSET);
+        final var bytes = String.format(String.format("%%1$0%1$dd", length), decoded).getBytes(CHARSET);
         if (bytes.length > length) {
-            throw new IllegalArgumentException("decoded.bytes.length(" + bytes.length + ") > length(" + length + ")");
+            throw new IllegalArgumentException(
+                    "decoded.bytes.length(" + bytes.length + ") > length(" + length + ")");
         }
         return bytes;
     }
@@ -29,6 +30,9 @@ class IFullTextSegmentCodecOf9
         Objects.requireNonNull(encoded, "encoded is null");
         if (length <= 0) {
             throw new IllegalArgumentException("length(" + length + ") is not positive");
+        }
+        if (encoded.length > length) {
+            throw new IllegalArgumentException("encoded.length(" + encoded.length + ") > length(" + length + ")");
         }
         return Integer.parseInt(new String(encoded, CHARSET), RADIX);
     }

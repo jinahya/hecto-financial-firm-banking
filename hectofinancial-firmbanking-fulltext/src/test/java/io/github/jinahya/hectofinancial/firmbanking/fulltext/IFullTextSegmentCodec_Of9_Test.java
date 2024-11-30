@@ -37,7 +37,8 @@ class IFullTextSegmentCodec_Of9_Test
         assertThat(decoded).isEqualTo(1);
     }
 
-    @DisplayName("공통부/은행코드/9(3)")
+    // -----------------------------------------------------------------------------------------------------------------
+    @DisplayName("공통부/3/은행코드/9(3)")
     @Test
     void 공통부_은행코드() {
         final int decoded = 2; // 002: 산업은행
@@ -47,7 +48,7 @@ class IFullTextSegmentCodec_Of9_Test
         assertThat(newCodecInstance().decode(encoded, length)).isEqualTo(decoded);
     }
 
-    @DisplayName("공통부/전문번호")
+    @DisplayName("공통부/7/전문번호/9(6)")
     @Test
     void 공통부_전문번호() {
         final int decoded = ThreadLocalRandom.current().nextInt(950000) + 1;
@@ -57,7 +58,7 @@ class IFullTextSegmentCodec_Of9_Test
         assertThat(newCodecInstance().decode(encoded, length)).isEqualTo(decoded);
     }
 
-    @DisplayName("공통부/전송일자/9(8)")
+    @DisplayName("공통부/8/전송일자/9(8)")
     @Test
     void 공통부_전송일자() {
         final int decoded = Integer.parseInt(
@@ -69,7 +70,7 @@ class IFullTextSegmentCodec_Of9_Test
         assertThat(newCodecInstance().decode(encoded, length)).isEqualTo(decoded);
     }
 
-    @DisplayName("공통부/전송시간/9(6)")
+    @DisplayName("공통부/9/전송시간/9(6)")
     @Test
     void 공통부_전송시간() {
         final int decoded = Integer.parseInt(
@@ -80,5 +81,4 @@ class IFullTextSegmentCodec_Of9_Test
         log.debug("decoded: {}, encoded: {}", decoded, encoded);
         assertThat(newCodecInstance().decode(encoded, length)).isEqualTo(decoded);
     }
-
 }

@@ -13,6 +13,7 @@ public interface IFullTextSegmentCodec<VALUE> {
         return new IFullTextSegmentCodecOfX();
     }
 
+    // -----------------------------------------------------------------------------------------------------------------
     byte[] encode(VALUE decoded, int length);
 
     VALUE decode(byte[] encoded, int length);
