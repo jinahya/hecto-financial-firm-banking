@@ -20,6 +20,7 @@ public abstract class FullText {
         buffer = ByteBuffer.allocate(capacity);
     }
 
+    // -----------------------------------------------------------------------------------------------------------------
     private final List<IFullTextSection> sections;
 
     private final ByteBuffer buffer;
