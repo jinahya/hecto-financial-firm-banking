@@ -2,19 +2,16 @@ package io.github.jinahya.hectofinancial.firmbanking.fulltext;
 
 import java.util.Objects;
 
-@SuppressWarnings({
-        "java:S119"  // Type parameter names should comply with a naming convention
-})
-abstract class IFullTextSegmentCodec__Test<CODEC extends IFullTextSegmentCodec<VALUE>, VALUE> {
+abstract class FullTextSegmentCodec__Test<C extends FullTextSegmentCodec<V>, V> {
 
-    IFullTextSegmentCodec__Test(final Class<CODEC> codecClass, final Class<VALUE> valueClass) {
+    FullTextSegmentCodec__Test(final Class<C> codecClass, final Class<V> valueClass) {
         super();
         this.codecClass = Objects.requireNonNull(codecClass, "codecClass is null");
         this.valueClass = Objects.requireNonNull(valueClass, "valueClass is null");
     }
 
     // ------------------------------------------------------------------------------------------------------ codecClass
-    CODEC newCodecInstance() {
+    C newCodecInstance() {
         try {
             final var constructor = codecClass.getDeclaredConstructor();
             if (!constructor.canAccess(null)) {
@@ -27,7 +24,7 @@ abstract class IFullTextSegmentCodec__Test<CODEC extends IFullTextSegmentCodec<V
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-    final Class<CODEC> codecClass;
+    final Class<C> codecClass;
 
-    final Class<VALUE> valueClass;
+    final Class<V> valueClass;
 }

@@ -12,11 +12,11 @@ import java.util.concurrent.ThreadLocalRandom;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
-class IFullTextSegmentCodec_Of9_Test
-        extends IFullTextSegmentCodec__Test<IFullTextSegmentCodecOf9, Integer> {
+class FullTextSegmentCodec_Of9_Test
+        extends FullTextSegmentCodec__Test<FullTextSegmentCodecOf9, Integer> {
 
-    IFullTextSegmentCodec_Of9_Test() {
-        super(IFullTextSegmentCodecOf9.class, Integer.class);
+    FullTextSegmentCodec_Of9_Test() {
+        super(FullTextSegmentCodecOf9.class, Integer.class);
     }
 
     @DisplayName("encode(1, 10)")

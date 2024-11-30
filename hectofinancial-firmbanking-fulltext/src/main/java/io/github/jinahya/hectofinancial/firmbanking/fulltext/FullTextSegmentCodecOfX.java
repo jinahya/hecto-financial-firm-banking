@@ -4,8 +4,8 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Objects;
 
-class IFullTextSegmentCodecOfX
-        implements IFullTextSegmentCodec<String> {
+class FullTextSegmentCodecOfX
+        implements FullTextSegmentCodec<String> {
 
     static final Charset CHARSET = Charset.forName("euc-kr");
 

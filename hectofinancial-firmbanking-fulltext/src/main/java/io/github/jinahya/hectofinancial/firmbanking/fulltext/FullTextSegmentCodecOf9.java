@@ -4,8 +4,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
-class IFullTextSegmentCodecOf9
-        implements IFullTextSegmentCodec<Integer> {
+class FullTextSegmentCodecOf9
+        implements FullTextSegmentCodec<Integer> {
 
     static final Charset CHARSET = StandardCharsets.US_ASCII;
 
@@ -19,8 +19,7 @@ class IFullTextSegmentCodecOf9
         }
         final var bytes = String.format(String.format("%%1$0%1$dd", length), decoded).getBytes(CHARSET);
         if (bytes.length > length) {
-            throw new IllegalArgumentException(
-                    "decoded.bytes.length(" + bytes.length + ") > length(" + length + ")");
+            throw new IllegalArgumentException("decoded.bytes.length(" + bytes.length + ") > length(" + length + ")");
         }
         return bytes;
     }

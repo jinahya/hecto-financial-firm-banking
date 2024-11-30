@@ -1,9 +1,6 @@
 package io.github.jinahya.hectofinancial.firmbanking.fulltext;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.ShortBufferException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
@@ -12,48 +9,124 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import java.util.stream.Collectors;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 public abstract class FullText {
 
-//    public static FullText from(final Iterable<? extends IFullTextSection> iterable) {
-//        final var sections = StreamSupport.stream(
-//                        Spliterators.spliteratorUnknownSize(iterable.iterator(), Spliterator.ORDERED),
-//                        false
-//                ).peek(s -> {
-//                    if (s == null) {
-//                        throw new IllegalArgumentException("null section");
-//                    }
-//                })
-//                .collect(Collectors.toUnmodifiableList())) {
-//            return new FullText(
-//
-//        };
-//    }
+    private static final int LENGTH_BYTES = 4;
 
-    private FullText(final List<IFullTextSection> sections) {
+    private static final FullTextSegmentCodec<Integer> LENGTH_CODEC = FullTextSegmentCodec.of9();
+
+    private static void writeBufferTo(final WritableByteChannel channel, final ByteBuffer buffer) throws IOException {
+        Objects.requireNonNull(buffer, "buffer is null");
+        if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
+            throw new IllegalArgumentException("channel is not open");
+        }
+        // write length
+        for (var b = ByteBuffer.wrap(LENGTH_CODEC.encode(buffer.remaining(), LENGTH_BYTES)); b.hasRemaining(); ) {
+            final var bytes = channel.write(b);
+            assert bytes >= 0;
+        }
+        // write text
+        while (buffer.hasRemaining()) {
+            final var bytes = channel.write(buffer);
+            assert bytes >= 0;
+        }
+    }
+
+    private static ByteBuffer readBufferFrom(final ReadableByteChannel channel) throws IOException {
+        if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
+            throw new IllegalArgumentException("channel is not open");
+        }
+        // read length
+        final int length;
+        {
+            final var b = ByteBuffer.allocate(LENGTH_BYTES);
+            while (b.hasRemaining()) {
+                final var bytes = channel.read(b);
+                assert bytes >= 0;
+            }
+            length = LENGTH_CODEC.decode(b.array(), LENGTH_BYTES);
+        }
+        final var b = ByteBuffer.allocate(length);
+        while (b.hasRemaining()) {
+            final var bytes = channel.read(b);
+            assert bytes >= 0;
+        }
+        return b;
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    public static final int SECTION_INDEX_1 = 1;
+
+    public static final int SECTION_INDEX_2 = 2;
+
+    // -----------------------------------------------------------------------------------------------------------------
+    public static FullText from(final Iterable<? extends FullTextSection> iterable) {
+        Objects.requireNonNull(iterable, "iterable is null");
+        final var sections = StreamSupport.stream(
+                Spliterators.spliteratorUnknownSize(iterable.iterator(), Spliterator.ORDERED),
+                false
+        ).peek(s -> {
+            if (s == null) {
+                throw new IllegalArgumentException("null section is not allowed");
+            }
+        }).toList();
+        return new FullText(sections) {
+        };
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    private FullText(final List<? extends FullTextSection> sections) {
         super();
         assert sections != null;
         assert !sections.isEmpty();
         this.sections = sections;
-//        Objects.requireNonNull(sections, "sections is null");
-//        this.sections = StreamSupport.stream(
-//                        Spliterators.spliteratorUnknownSize(sections.iterator(), Spliterator.ORDERED),
-//                        false
-//                ).peek(s -> {
-//                    if (s == null) {
-//                        throw new IllegalArgumentException("null section");
-//                    }
-//                })
-//                .collect(Collectors.toUnmodifiableList());
         final var capacity = this.sections.stream()
-                .mapToInt(IFullTextSection::getLength)
+                .mapToInt(FullTextSection::getLength)
                 .sum();
         buffer = ByteBuffer.allocate(capacity);
     }
 
     // -------------------------------------------------------------------------------------------------------- sections
+    public <R> R applySection(final int index, final Function<? super FullTextSection, ? extends R> function) {
+        Objects.requireNonNull(function, "function is null");
+        if (index <= 0) {
+            throw new IllegalArgumentException("index(" + index + ") is not positive");
+        }
+        if (index >= sections.size()) {
+            throw new IllegalArgumentException(
+                    "index(" + index + ") > sections.size(" + sections.size() + ")"
+            );
+        }
+        return function.apply(sections.get(index));
+    }
+
+    public void acceptSection(final int index, final Consumer<? super FullTextSection> consumer) {
+        Objects.requireNonNull(consumer, "consumer is null");
+        applySection(index, s -> {
+            consumer.accept(s);
+            return null;
+        });
+    }
+
+    public <V> V getValue(final int sectionIndex, final int segmentIndex) {
+        return applySection(sectionIndex, s -> s.getValue(segmentIndex, buffer));
+    }
+
+    public <V> void setValue(final int sectionIndex, final int segmentIndex, final V value) {
+        acceptSection(
+                sectionIndex,
+                s -> s.setValue(segmentIndex, buffer, value)
+        );
+    }
+
+    public <V> FullText value(final int sectionIndex, final int segmentIndex, final V value) {
+        setValue(sectionIndex, segmentIndex, value);
+        return this;
+    }
 
     // ---------------------------------------------------------------------------------------------------------- buffer
 
@@ -67,93 +140,54 @@ public abstract class FullText {
         if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
             throw new IllegalArgumentException("channel is not open");
         }
-        for (buffer.reset(); buffer.hasRemaining(); ) {
-            final var bytes = channel.write(buffer);
-            assert bytes >= 0;
-        }
+        writeBufferTo(channel, buffer.clear());
     }
 
     public void readFrom(final ReadableByteChannel channel) throws IOException {
         if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
             throw new IllegalArgumentException("channel is not open");
         }
-        for (buffer.reset(); buffer.hasRemaining(); ) {
-            final var bytes = channel.read(buffer);
-            assert bytes >= 0;
-        }
+        buffer.clear().put(readBufferFrom(channel).flip());
     }
 
     /**
      * Writes this full text to specified channel while encrypting with specified cipher.
      *
-     * @param cipher  the cipher.
      * @param channel the channel.
+     * @param cipher  the cipher.
      * @throws IOException if an I/O error occurs.
      */
-    public void writeTo(final Cipher cipher, WritableByteChannel channel) throws IOException {
-        Objects.requireNonNull(cipher, "cipher is null");
+    public void writeTo(final WritableByteChannel channel, final Cipher cipher) throws IOException {
         if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
             throw new IllegalArgumentException("channel is not open");
         }
-        var output = ByteBuffer.allocate(cipher.getOutputSize(buffer.capacity()));
-        // ------------------------------------------------------------------------------------------------------ update
-        for (buffer.clear(); buffer.hasRemaining(); ) {
-            try {
-                cipher.update(buffer, output.clear());
-            } catch (final ShortBufferException sbe) {
-                output = ByteBuffer.allocate(output.capacity() << 1);
-            }
-            for (output.flip(); output.hasRemaining(); ) {
-                final var bytes = channel.write(output);
-                assert bytes >= 0;
-            }
+        Objects.requireNonNull(cipher, "cipher is null");
+        final var output = ByteBuffer.allocate(cipher.getOutputSize(buffer.capacity()));
+        try {
+            final var bytes = cipher.doFinal(buffer.clear(), output);
+            assert bytes <= output.limit();
+        } catch (final Exception e) {
+            throw new RuntimeException("failed to encrypt", e);
         }
-        // ----------------------------------------------------------------------------------------------------- doFinal
-        assert !buffer.hasRemaining();
-        while (true) {
-            try {
-                cipher.doFinal(buffer, output.clear());
-                break;
-            } catch (final ShortBufferException sbe) {
-                output = ByteBuffer.allocate(output.capacity() << 1);
-            } catch (IllegalBlockSizeException | BadPaddingException e) {
-                throw new RuntimeException("failed to do final", e);
-            }
-        }
-        for (output.flip(); output.hasRemaining(); ) {
-            final var bytes = channel.write(output);
-            assert bytes >= 0;
-        }
+        writeBufferTo(channel, output.flip());
     }
 
-    public void readFrom(final Cipher cipher, final ReadableByteChannel channel) throws IOException {
-        Objects.requireNonNull(cipher, "cipher is null");
+    public void readFrom(final ReadableByteChannel channel, final Cipher cipher) throws IOException {
         if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
             throw new IllegalArgumentException("channel is not open");
         }
-        var input = ByteBuffer.allocate(cipher.getOutputSize(buffer.capacity()));
-        // ------------------------------------------------------------------------------------------------------ update
-        for (buffer.clear(); channel.read(input.clear()) != -1; ) {
-            try {
-                final var bytes = cipher.update(input.flip(), buffer);
-                assert bytes >= 0;
-            } catch (final ShortBufferException sbe) {
-                throw new RuntimeException("failed to update", sbe);
-            }
-        }
-        // ----------------------------------------------------------------------------------------------------- doFinal
-        assert !input.hasRemaining();
+        Objects.requireNonNull(cipher, "cipher is null");
+        final var input = readBufferFrom(channel);
         try {
-            final var bytes = cipher.doFinal(input, buffer);
+            final var bytes = cipher.doFinal(input.flip(), buffer.clear());
             assert bytes >= 0;
-            assert !buffer.hasRemaining();
         } catch (final Exception e) {
-            throw new RuntimeException("failed to do final", e);
+            throw new RuntimeException("failed to decrypt", e);
         }
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-    private final List<IFullTextSection> sections;
+    private final List<? extends FullTextSection> sections;
 
     private final ByteBuffer buffer;
 }
