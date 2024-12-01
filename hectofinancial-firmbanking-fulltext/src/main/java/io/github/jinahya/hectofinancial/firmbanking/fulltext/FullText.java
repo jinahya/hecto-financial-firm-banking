@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -21,7 +24,7 @@ public abstract class FullText {
     // ------------------------------------------------------------------------------------------ STATIC_FACTORY_METHODS
 
     /**
-     * Creates a new instance of specified category, {@code 전문구분코드}, {@code 업무구분코드}.
+     * Creates a new instance of specified category, {@code 전문구분코드}, and {@code 업무구분코드}.
      *
      * @param category the category.
      * @param textCode the {@code 전문구분코드}.
@@ -54,7 +57,7 @@ public abstract class FullText {
     public static FullText readInstance(final FullTextCategory category, final ReadableByteChannel channel)
             throws IOException {
         Objects.requireNonNull(category, "category is null");
-        final var buffer = FullTextUtils.readBuffer(channel).clear();
+        final var buffer = FullTextUtils.readBuffer(category, channel);
         final var textCode = category.getTextCode(buffer);
         final var taskCode = category.getTaskCode(buffer);
         return newInstance(category, textCode, taskCode).setData(buffer.clear());
@@ -78,7 +81,7 @@ public abstract class FullText {
             throw new IllegalArgumentException("channel is not open");
         }
         Objects.requireNonNull(cipher, "cipher is null");
-        final var buffer = FullTextUtils.readBuffer(channel);
+        final var buffer = FullTextUtils.readBuffer(category, channel);
         final var output = ByteBuffer.allocate(category.textLength);
         try {
             cipher.doFinal(buffer.clear(), output);
@@ -115,6 +118,12 @@ public abstract class FullText {
 
     /**
      * Applies the section of specified index to specified function, and return the result.
+     * <p>
+     * {@snippet lang = java:
+     * var date = applySection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
+     *     return s.date_(8); // 8 전송일자
+     * });
+     *}
      *
      * @param index    the section index; starting at {@code 1}.
      * @param function the function to be applied with the section of {@code index}.
@@ -139,6 +148,14 @@ public abstract class FullText {
 
     /**
      * Accepts the section of specified index to specified consumer.
+     * <p>
+     * {@snippet lang = java:
+     * acceptSection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
+     *     s.value(3, "002");           // 3 은행코드
+     *     s.date_(8, LocalDate.now()); // 8 전송일자
+     *     s.time_(9, LocalTime.now()); // 9 전송시간
+     * });
+     *}
      *
      * @param index    the section index; starting at {@code 1}.
      * @param consumer the consumer to be accepted with the section of {@code index}.
@@ -154,14 +171,66 @@ public abstract class FullText {
         });
     }
 
+    /**
+     * Returns {@code 전송일자} segment's value of section {@value FullTextConstants#SECTION_INDEX_HEAD}.
+     *
+     * @return the value of {@code 전송일자} segment.
+     * @see FullTextConstants#SECTION_INDEX_HEAD
+     * @see #setHeadDate(LocalDate)
+     */
+    public LocalDate getHeadDate() {
+        return applySection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
+            return s.date_(8);
+        });
+    }
+
+    /**
+     * Sets {@code 전송일자} segment's value, of section {@value FullTextConstants#SECTION_INDEX_HEAD}, with specified
+     * value.
+     *
+     * @param headDate new value for the {@code 전송일자} segment.
+     * @see FullTextConstants#SECTION_INDEX_HEAD
+     * @see #getHeadDate()
+     */
+    public void setHeadDate(final LocalDate headDate) {
+        acceptSection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
+            s.date_(8, headDate);
+        });
+    }
+
+    public LocalTime getHeadTime() {
+        return applySection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
+            return s.time_(9);
+        });
+    }
+
+    public void setHeadTime(final LocalTime headTime) {
+        acceptSection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
+            s.time_(8, headTime);
+        });
+    }
+
+    public LocalDateTime getHeadDateTime() {
+        return LocalDateTime.of(getHeadDate(), getHeadTime());
+    }
+
+    public void setHeadDateTime(final LocalDateTime headDateTime) {
+        setHeadDate(LocalDate.from(headDateTime));
+        setHeadTime(LocalTime.from(headDateTime));
+    }
+
+    public void setHeadDateTimeAsNow() {
+        setHeadDateTime(LocalDateTime.now());
+    }
+
     // ---------------------------------------------------------------------------------------------------------- buffer
     public String getDataString() {
         return FullTextSegmentCodecX.CHARSET.decode(buffer.clear()).toString();
     }
 
+    @SuppressWarnings({"unchecked"})
     public <T extends ByteBuffer> T getData(final T dst) {
-        Objects.requireNonNull(dst, "dst is null");
-        return (T) dst.put(buffer.clear());
+        return (T) Objects.requireNonNull(dst, "dst is null").put(buffer.clear());
     }
 
     public byte[] getData(final byte[] dst) {
@@ -218,7 +287,7 @@ public abstract class FullText {
         if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
             throw new IllegalArgumentException("channel is not open");
         }
-        FullTextUtils.writeBuffer(channel, buffer.clear());
+        FullTextUtils.writeBuffer(category, channel, buffer.clear());
         return this;
     }
 
@@ -226,7 +295,7 @@ public abstract class FullText {
         if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
             throw new IllegalArgumentException("channel is not open");
         }
-        return setData(FullTextUtils.readBuffer(channel).flip());
+        return setData(FullTextUtils.readBuffer(category, channel).flip());
     }
 
     /**
@@ -249,7 +318,7 @@ public abstract class FullText {
         } catch (final Exception e) {
             throw new RuntimeException("failed to encrypt", e);
         }
-        FullTextUtils.writeBuffer(channel, output.flip());
+        FullTextUtils.writeBuffer(category, channel, output.flip());
         return this;
     }
 
@@ -258,7 +327,7 @@ public abstract class FullText {
             throw new IllegalArgumentException("channel is not open");
         }
         Objects.requireNonNull(cipher, "cipher is null");
-        final var input = FullTextUtils.readBuffer(channel);
+        final var input = FullTextUtils.readBuffer(category, channel);
         try {
             final var bytes = cipher.doFinal(input.flip(), buffer.clear());
             assert bytes >= 0;

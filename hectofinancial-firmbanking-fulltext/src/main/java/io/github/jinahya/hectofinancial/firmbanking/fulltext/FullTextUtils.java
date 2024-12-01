@@ -14,24 +14,32 @@ final class FullTextUtils {
 
     private static final FullTextSegmentCodec<Integer> LENGTH_CODEC = FullTextSegmentCodec.of9();
 
-    static void writeBuffer(final WritableByteChannel channel, final ByteBuffer buffer) throws IOException {
-        Objects.requireNonNull(buffer, "buffer is null");
+    static void writeBuffer(final FullTextCategory category, final WritableByteChannel channel, final ByteBuffer buffer)
+            throws IOException {
+        Objects.requireNonNull(category, "category is null");
+        if (Objects.requireNonNull(buffer, "buffer is null").capacity() != category.textLength) {
+            throw new IllegalArgumentException(
+                    "buffer.capacity(" + buffer.capacity() + ") != category.textLength(" + category.textLength + ")"
+            );
+        }
         if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
             throw new IllegalArgumentException("channel is not open");
         }
         // write length
-        for (var b = ByteBuffer.wrap(LENGTH_CODEC.encode(buffer.remaining(), LENGTH_BYTES)); b.hasRemaining(); ) {
+        for (var b = ByteBuffer.wrap(LENGTH_CODEC.encode(buffer.capacity(), LENGTH_BYTES)); b.hasRemaining(); ) {
             final var bytes = channel.write(b);
             assert bytes >= 0;
         }
         // write text
-        while (buffer.hasRemaining()) {
+        for (buffer.clear(); buffer.hasRemaining(); ) {
             final var bytes = channel.write(buffer);
             assert bytes >= 0;
         }
     }
 
-    static ByteBuffer readBuffer(final ReadableByteChannel channel) throws IOException {
+    static ByteBuffer readBuffer(final FullTextCategory category, final ReadableByteChannel channel)
+            throws IOException {
+        Objects.requireNonNull(category, "category is null");
         if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
             throw new IllegalArgumentException("channel is not open");
         }
@@ -45,6 +53,11 @@ final class FullTextUtils {
                 }
             }
             length = LENGTH_CODEC.decode(b.array(), LENGTH_BYTES);
+        }
+        if (length != category.textLength) {
+            throw new IOException(
+                    "invalid length(" + length + ") read for category.textLength(" + category.textLength + ")"
+            );
         }
         final var b = ByteBuffer.allocate(length);
         while (b.hasRemaining()) {
