@@ -4,17 +4,24 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Objects;
 
-class FullTextSegmentCodecOfX
-        implements FullTextSegmentCodec<String> {
+class FullTextSegmentCodecX
+        extends FullTextSegmentCodec<String> {
 
     static final Charset CHARSET = Charset.forName("euc-kr");
 
-    @Override
-    public byte[] encode(final String decoded, final int length) {
-        Objects.requireNonNull(decoded, "decoded is null");
-        if (length <= 0) {
-            throw new IllegalArgumentException("length(" + length + ") is not positive");
-        }
+    // -----------------------------------------------------------------------------------------------------------------
+    FullTextSegmentCodecX() {
+        super();
+    }
+
+    String toSimplifiedString() {
+        return "X";
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    private byte[] encode(final String decoded, final int length) {
+        assert decoded != null;
+        assert length > 0;
         final var encoded = new byte[length];
         {
             final var bytes = decoded.getBytes(CHARSET);
@@ -30,7 +37,19 @@ class FullTextSegmentCodecOfX
     }
 
     @Override
-    public String decode(final byte[] encoded, final int length) {
+    byte[] encode(final Object decoded, final int length) {
+        Objects.requireNonNull(decoded, "decoded is null");
+        if (length <= 0) {
+            throw new IllegalArgumentException("length(" + length + ") is not positive");
+        }
+        if (decoded instanceof String s) {
+            return encode(s, length);
+        }
+        return encode(decoded.toString(), length);
+    }
+
+    @Override
+    String decode(final byte[] encoded, final int length) {
         Objects.requireNonNull(encoded, "encoded is null");
         if (length <= 0) {
             throw new IllegalArgumentException("length(" + length + ") is not positive");

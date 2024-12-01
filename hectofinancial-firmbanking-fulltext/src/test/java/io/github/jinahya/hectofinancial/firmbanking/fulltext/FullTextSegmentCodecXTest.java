@@ -7,11 +7,11 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
-class FullTextSegmentCodec_OfX_Test
-        extends FullTextSegmentCodec__Test<FullTextSegmentCodecOfX, String> {
+class FullTextSegmentCodecXTest
+        extends FullTextSegmentCodec$Test<FullTextSegmentCodecX, String> {
 
-    FullTextSegmentCodec_OfX_Test() {
-        super(FullTextSegmentCodecOfX.class, String.class);
+    FullTextSegmentCodecXTest() {
+        super(FullTextSegmentCodecX.class, String.class);
     }
 
     @Test
@@ -35,7 +35,7 @@ class FullTextSegmentCodec_OfX_Test
         final var decoded = "홍길동";
         final var encoded = newCodecInstance().encode(decoded, 10);
         log.debug("encoded: {}", encoded);
-        assertThat(new String(encoded, FullTextSegmentCodecOfX.CHARSET)).isEqualTo("홍길동    ");
+        assertThat(new String(encoded, FullTextSegmentCodecX.CHARSET)).isEqualTo("홍길동    ");
     }
 
     @Test
@@ -53,7 +53,7 @@ class FullTextSegmentCodec_OfX_Test
         final int length = 9;
         final byte[] encoded = newCodecInstance().encode(decoded, length);
         log.debug("encoded: {}", encoded);
-        assertThat(encoded).isEqualTo(decoded.getBytes(FullTextSegmentCodecOfX.CHARSET));
+        assertThat(encoded).isEqualTo(decoded.getBytes(FullTextSegmentCodecX.CHARSET));
         assertThat(newCodecInstance().decode(encoded, length)).isEqualTo(decoded);
     }
 
@@ -74,7 +74,7 @@ class FullTextSegmentCodec_OfX_Test
         final int length = 4;
         final byte[] encoded = newCodecInstance().encode(decoded, length);
         log.debug("encoded: {}", encoded);
-        assertThat(encoded).isEqualTo(decoded.getBytes(FullTextSegmentCodecOfX.CHARSET));
+        assertThat(encoded).isEqualTo(decoded.getBytes(FullTextSegmentCodecX.CHARSET));
         assertThat(newCodecInstance().decode(encoded, length)).isEqualTo(decoded);
     }
 
@@ -85,7 +85,7 @@ class FullTextSegmentCodec_OfX_Test
         final int length = 3;
         final byte[] encoded = newCodecInstance().encode(decoded, length);
         log.debug("encoded: {}", encoded);
-        assertThat(encoded).isEqualTo(decoded.getBytes(FullTextSegmentCodecOfX.CHARSET));
+        assertThat(encoded).isEqualTo(decoded.getBytes(FullTextSegmentCodecX.CHARSET));
         assertThat(newCodecInstance().decode(encoded, length)).isEqualTo(decoded);
     }
 
@@ -96,7 +96,7 @@ class FullTextSegmentCodec_OfX_Test
         final int length = 4;
         final byte[] encoded = newCodecInstance().encode(decoded, length);
         log.debug("encoded: {}", encoded);
-        assertThat(encoded).isEqualTo(decoded.getBytes(FullTextSegmentCodecOfX.CHARSET));
+        assertThat(encoded).isEqualTo(decoded.getBytes(FullTextSegmentCodecX.CHARSET));
         assertThat(newCodecInstance().decode(encoded, length)).isEqualTo(decoded);
     }
 }

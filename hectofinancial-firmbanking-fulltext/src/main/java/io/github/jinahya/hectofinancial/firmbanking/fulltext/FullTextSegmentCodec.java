@@ -1,18 +1,18 @@
 package io.github.jinahya.hectofinancial.firmbanking.fulltext;
 
-public interface FullTextSegmentCodec<V> {
+abstract class FullTextSegmentCodec<V> {
 
     // -----------------------------------------------------------------------------------------------------------------
     static FullTextSegmentCodec<Integer> of9() {
-        return new FullTextSegmentCodecOf9();
+        return new FullTextSegmentCodec9();
     }
 
     static FullTextSegmentCodec<String> ofX() {
-        return new FullTextSegmentCodecOfX();
+        return new FullTextSegmentCodecX();
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-    byte[] encode(V decoded, int length);
+    abstract byte[] encode(Object decoded, int length);
 
-    V decode(byte[] encoded, int length);
+    abstract V decode(byte[] encoded, int length);
 }

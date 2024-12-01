@@ -5,105 +5,93 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.StreamSupport;
 
 public abstract class FullText {
 
-    private static final int LENGTH_BYTES = 4;
-
-    private static final FullTextSegmentCodec<Integer> LENGTH_CODEC = FullTextSegmentCodec.of9();
-
-    private static void writeBufferTo(final WritableByteChannel channel, final ByteBuffer buffer) throws IOException {
-        Objects.requireNonNull(buffer, "buffer is null");
-        if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
-            throw new IllegalArgumentException("channel is not open");
-        }
-        // write length
-        for (var b = ByteBuffer.wrap(LENGTH_CODEC.encode(buffer.remaining(), LENGTH_BYTES)); b.hasRemaining(); ) {
-            final var bytes = channel.write(b);
-            assert bytes >= 0;
-        }
-        // write text
-        while (buffer.hasRemaining()) {
-            final var bytes = channel.write(buffer);
-            assert bytes >= 0;
-        }
-    }
-
-    private static ByteBuffer readBufferFrom(final ReadableByteChannel channel) throws IOException {
-        if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
-            throw new IllegalArgumentException("channel is not open");
-        }
-        // read length
-        final int length;
-        {
-            final var b = ByteBuffer.allocate(LENGTH_BYTES);
-            while (b.hasRemaining()) {
-                final var bytes = channel.read(b);
-                assert bytes >= 0;
-            }
-            length = LENGTH_CODEC.decode(b.array(), LENGTH_BYTES);
-        }
-        final var b = ByteBuffer.allocate(length);
-        while (b.hasRemaining()) {
-            final var bytes = channel.read(b);
-            assert bytes >= 0;
-        }
-        return b;
-    }
-
-    // -----------------------------------------------------------------------------------------------------------------
-    public static final int SECTION_INDEX_1 = 1;
-
-    public static final int SECTION_INDEX_2 = 2;
-
-    // -----------------------------------------------------------------------------------------------------------------
-    public static FullText from(final Iterable<? extends FullTextSection> iterable) {
-        Objects.requireNonNull(iterable, "iterable is null");
-        final var sections = StreamSupport.stream(
-                Spliterators.spliteratorUnknownSize(iterable.iterator(), Spliterator.ORDERED),
-                false
-        ).peek(s -> {
-            if (s == null) {
-                throw new IllegalArgumentException("null section is not allowed");
-            }
-        }).toList();
-        return new FullText(sections) {
+    // ------------------------------------------------------------------------------------------ STATIC_FACTORY_METHODS
+    public static FullText newInstance(final FullTextCategory category, final String textCode,
+                                       final String taskCode) {
+        final var sections = List.of(
+                FullTextSection.newHeadInstance(category),
+                FullTextSection.newInstance(category, textCode, taskCode)
+        );
+        final var text = new FullText(category, sections) {
         };
+        text.sections.forEach(s -> s.setText(text));
+        return text;
+    }
+
+    public static FullText readInstance(final FullTextCategory category,
+                                        final ReadableByteChannel channel)
+            throws IOException {
+        Objects.requireNonNull(category, "category is null");
+        final var buffer = FullTextUtils.readBuffer(channel).clear();
+        final var textCode = category.getTextCode(buffer);
+        final var taskCode = category.getTaskCode(buffer);
+        return newInstance(category, textCode, taskCode).setData(buffer.clear());
+    }
+
+    // ---------------------------------------------------------------------------------------------------- CONSTRUCTORS
+    private FullText(final FullTextCategory category,
+                     final List<? extends FullTextSection> sections) {
+        super();
+        Objects.requireNonNull(category, "category is null");
+        if (Objects.requireNonNull(sections, "sections is null").isEmpty()) {
+            throw new IllegalArgumentException("empty sections");
+        }
+        this.category = category;
+        this.sections = List.copyOf(sections);
+        final var last = this.sections.stream()
+                .flatMap(s -> s.segments.stream())
+                .reduce((s1, s2) -> s2.previous(s1))
+                .orElseThrow();
+        buffer = ByteBuffer.allocate(last.getOffset() + last.length);
+        Arrays.fill(buffer.array(), (byte) 0x20);
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-    private FullText(final List<? extends FullTextSection> sections) {
-        super();
-        assert sections != null;
-        assert !sections.isEmpty();
-        this.sections = sections;
-        final var capacity = this.sections.stream()
-                .mapToInt(FullTextSection::getLength)
-                .sum();
-        buffer = ByteBuffer.allocate(capacity);
+
+    // -----------------------------------------------------------------------------------------------------------------
+    public String getDataString() {
+        return FullTextSegmentCodecX.CHARSET.decode(buffer.clear()).toString();
     }
 
     // -------------------------------------------------------------------------------------------------------- sections
+
+    /**
+     * Applies the section of specified index to specified function, and return the result.
+     *
+     * @param index    the section index; starting at {@code 1}.
+     * @param function the function to be applied with the section of {@code index}.
+     * @param <R>      result type parameter
+     * @return the result of the {@code function}.
+     * @see #acceptSection(int, Consumer)
+     */
     public <R> R applySection(final int index, final Function<? super FullTextSection, ? extends R> function) {
         Objects.requireNonNull(function, "function is null");
         if (index <= 0) {
             throw new IllegalArgumentException("index(" + index + ") is not positive");
         }
-        if (index >= sections.size()) {
+        if (index > sections.size()) {
             throw new IllegalArgumentException(
                     "index(" + index + ") > sections.size(" + sections.size() + ")"
             );
         }
-        return function.apply(sections.get(index));
+        return function.apply(sections.get(index - 1));
     }
 
+    /**
+     * Accepts the section of specified index to specified consumer.
+     *
+     * @param index    the section index; starting at {@code 1}.
+     * @param consumer the consumer to be accepted with the section of {@code index}.
+     * @see #applySection(int, Function)
+     */
     public void acceptSection(final int index, final Consumer<? super FullTextSection> consumer) {
         Objects.requireNonNull(consumer, "consumer is null");
         applySection(index, s -> {
@@ -112,23 +100,55 @@ public abstract class FullText {
         });
     }
 
-    public <V> V getValue(final int sectionIndex, final int segmentIndex) {
-        return applySection(sectionIndex, s -> s.getValue(segmentIndex, buffer));
+    // ---------------------------------------------------------------------------------------------------------- buffer
+    public <T extends ByteBuffer> T getData(final T dst) {
+        Objects.requireNonNull(dst, "dst is null");
+        return (T) dst.put(buffer.clear());
     }
 
-    public <V> void setValue(final int sectionIndex, final int segmentIndex, final V value) {
-        acceptSection(
-                sectionIndex,
-                s -> s.setValue(segmentIndex, buffer, value)
-        );
+    public byte[] getData(final byte[] dst) {
+        return ByteBuffer.wrap(Objects.requireNonNull(dst, "dst is null")).array();
     }
 
-    public <V> FullText value(final int sectionIndex, final int segmentIndex, final V value) {
-        setValue(sectionIndex, segmentIndex, value);
+    public FullText setData(final ByteBuffer src) {
+        Objects.requireNonNull(src, "src is null");
+        buffer.clear().put(src);
         return this;
     }
 
-    // ---------------------------------------------------------------------------------------------------------- buffer
+    public FullText setData(final byte[] src) {
+        return setData(ByteBuffer.wrap(Objects.requireNonNull(src, "src is null")));
+    }
+
+    /**
+     * Returns the value of {@code 전문구분코드} of this full text.
+     *
+     * @return the value of {@code 전문구분코드} of this full text.
+     */
+    public final String getTextCode() {
+        return category.getTextCode(buffer);
+    }
+
+    public FullText setTextCode(final String textCode) {
+        Objects.requireNonNull(textCode, "textCode is null");
+        category.setTextCode(buffer, textCode);
+        return this;
+    }
+
+    /**
+     * Returns the value of {@code 업무구분코드} of this full text.
+     *
+     * @return the value of {@code 업무구분코드} of this full text.
+     */
+    public final String getTaskCode() {
+        return category.getTaskCode(buffer);
+    }
+
+    public FullText setTaskCode(final String taskCode) {
+        Objects.requireNonNull(taskCode, "taskCode is null");
+        category.setTaskCode(buffer, taskCode);
+        return this;
+    }
 
     /**
      * Writes this full text to specified channel.
@@ -136,18 +156,19 @@ public abstract class FullText {
      * @param channel the channel.
      * @throws IOException if an I/O error occurs.
      */
-    public void writeTo(final WritableByteChannel channel) throws IOException {
+    public final FullText write(final WritableByteChannel channel) throws IOException {
         if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
             throw new IllegalArgumentException("channel is not open");
         }
-        writeBufferTo(channel, buffer.clear());
+        FullTextUtils.writeBuffer(channel, buffer.clear());
+        return this;
     }
 
-    public void readFrom(final ReadableByteChannel channel) throws IOException {
+    public final FullText read(final ReadableByteChannel channel) throws IOException {
         if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
             throw new IllegalArgumentException("channel is not open");
         }
-        buffer.clear().put(readBufferFrom(channel).flip());
+        return setData(FullTextUtils.readBuffer(channel).flip());
     }
 
     /**
@@ -155,9 +176,10 @@ public abstract class FullText {
      *
      * @param channel the channel.
      * @param cipher  the cipher.
+     * @return this full text.
      * @throws IOException if an I/O error occurs.
      */
-    public void writeTo(final WritableByteChannel channel, final Cipher cipher) throws IOException {
+    public FullText write(final WritableByteChannel channel, final Cipher cipher) throws IOException {
         if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
             throw new IllegalArgumentException("channel is not open");
         }
@@ -169,25 +191,29 @@ public abstract class FullText {
         } catch (final Exception e) {
             throw new RuntimeException("failed to encrypt", e);
         }
-        writeBufferTo(channel, output.flip());
+        FullTextUtils.writeBuffer(channel, output.flip());
+        return this;
     }
 
-    public void readFrom(final ReadableByteChannel channel, final Cipher cipher) throws IOException {
+    public FullText read(final ReadableByteChannel channel, final Cipher cipher) throws IOException {
         if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
             throw new IllegalArgumentException("channel is not open");
         }
         Objects.requireNonNull(cipher, "cipher is null");
-        final var input = readBufferFrom(channel);
+        final var input = FullTextUtils.readBuffer(channel);
         try {
             final var bytes = cipher.doFinal(input.flip(), buffer.clear());
             assert bytes >= 0;
         } catch (final Exception e) {
             throw new RuntimeException("failed to decrypt", e);
         }
+        return this;
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-    private final List<? extends FullTextSection> sections;
+    final FullTextCategory category;
 
-    private final ByteBuffer buffer;
+    final List<? extends FullTextSection> sections;
+
+    final ByteBuffer buffer;
 }

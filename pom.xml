@@ -359,7 +359,7 @@
               <link>https://static.javadoc.io/org.mockito/mockito-junit-jupiter/${version.org.mockito}</link>
               <link>https://junit.org/junit5/docs/current/api/</link>
             </links>
-            <show>package</show>
+<!--            <show>package</show>-->
             <tags>
               <tag>
                 <name>apiNote</name>

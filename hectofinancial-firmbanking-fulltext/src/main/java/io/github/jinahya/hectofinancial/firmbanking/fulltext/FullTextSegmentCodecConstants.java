@@ -2,7 +2,7 @@ package io.github.jinahya.hectofinancial.firmbanking.fulltext;
 
 import java.time.format.DateTimeFormatter;
 
-public final class FullTextSegmentCodecConstants {
+final class FullTextSegmentCodecConstants {
 
     // -----------------------------------------------------------------------------------------------------------------
     private static final String PATTERN_DATE = "uuuuMMdd";

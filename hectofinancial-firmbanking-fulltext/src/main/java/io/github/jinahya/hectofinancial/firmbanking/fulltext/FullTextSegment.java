@@ -1,33 +1,77 @@
 package io.github.jinahya.hectofinancial.firmbanking.fulltext;
 
+import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.Optional;
 
-public abstract class FullTextSegment {
+abstract class FullTextSegment {
 
     // -----------------------------------------------------------------------------------------------------------------
-    public static FullTextSegment newInstance(final int length, final FullTextSegmentCodec<?> codec) {
-        return new FullTextSegment(length, codec) {
+    private static FullTextSegment newInstance(final int length, final FullTextSegmentCodec<?> codec) {
+        return new FullTextSegment(codec, length) {
         };
     }
 
-    public static FullTextSegment newInstanceOf9(final int length) {
+    static FullTextSegment newInstanceOf9(final int length) {
         return newInstance(length, FullTextSegmentCodec.of9());
     }
 
-    public static FullTextSegment newInstanceOfX(final int length) {
+    static FullTextSegment newInstanceOfX(final int length) {
         return newInstance(length, FullTextSegmentCodec.ofX());
     }
 
-    // -----------------------------------------------------------------------------------------------------------------
-    private FullTextSegment(final int length, final FullTextSegmentCodec<?> codec) {
+    // ---------------------------------------------------------------------------------------------------- CONSTRUCTORS
+    private FullTextSegment(final FullTextSegmentCodec<?> codec, final int length) {
         super();
+        Objects.requireNonNull(codec, "codec is null");
         if (length <= 0) {
             throw new IllegalArgumentException("length(" + length + ") is not positive");
         }
-        Objects.requireNonNull(codec, "codec is null");
-        this.length = length;
         this.codec = codec;
+        this.length = length;
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
+
+    @Override
+    public String toString() {
+        return super.toString() + '{' +
+                "codec=" + codec +
+                ",length=" + length +
+                ",previous=" + previous +
+                ",offset=" + offset +
+                ",tag=" + tag +
+                '}';
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    <V> V getValue(final ByteBuffer buffer) {
+        final var dst = new byte[length];
+        buffer.get(offset, dst);
+        return (V) codec.decode(dst, length);
+    }
+
+    void setValue(final ByteBuffer buffer, final Object value) {
+        final var src = codec.encode(value, length);
+        buffer.put(offset, src);
+    }
+
+    // ----------------------------------------------------------------------------------------------------------- codec
+
+    // ---------------------------------------------------------------------------------------------------------- length
+
+    // ---------------------------------------------------------------------------------------------------------- offset
+    int getOffset() {
+        return offset;
+    }
+
+    void setOffset(final int offset) {
+        this.offset = offset;
+    }
+
+    FullTextSegment offset(final int offset) {
+        setOffset(offset);
+        return this;
     }
 
     // -------------------------------------------------------------------------------------------------------- previous
@@ -40,31 +84,29 @@ public abstract class FullTextSegment {
         setOffset(Optional.ofNullable(this.previous).map(p -> p.offset + p.length).orElse(0));
     }
 
-    // ---------------------------------------------------------------------------------------------------------- offset
-    int getOffset() {
-        return offset;
+    FullTextSegment previous(final FullTextSegment previous) {
+        setPrevious(previous);
+        return this;
     }
 
-    void setOffset(final int offset) {
-        this.offset = offset;
+    // ------------------------------------------------------------------------------------------------------------- tag
+
+    public String getTag() {
+        return tag;
     }
 
-    // ---------------------------------------------------------------------------------------------------------- length
-    int getLength() {
-        return length;
-    }
-
-    // ----------------------------------------------------------------------------------------------------------- codec
-    FullTextSegmentCodec<?> getCodec() {
-        return codec;
+    void setTag(final String tag) {
+        this.tag = tag;
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-    private FullTextSegment previous;
+    final FullTextSegmentCodec<?> codec;
+
+    final int length;
 
     private int offset;
 
-    private final int length;
+    private FullTextSegment previous;
 
-    private final FullTextSegmentCodec<?> codec;
+    private String tag;
 }
