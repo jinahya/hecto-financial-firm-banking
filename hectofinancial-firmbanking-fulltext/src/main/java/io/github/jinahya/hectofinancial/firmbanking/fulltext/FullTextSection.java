@@ -90,7 +90,7 @@ public abstract class FullTextSection {
             "unchecked",
             "java:S1117" // Local variables should not shadow class fields
     })
-    public final <T> T getValue(final int index) {
+    public <T> T getValue(final int index) {
         if (index <= 0) {
             throw new IllegalArgumentException("index(" + index + ") is not positive");
         }
@@ -136,7 +136,7 @@ public abstract class FullTextSection {
      * @param index the index of the segment.
      * @return the value of the segment of specified index as {@code int}.
      */
-    public final int int__(final int index) {
+    public int int__(final int index) {
         return this.<Integer>getValue(index);
     }
 
@@ -147,29 +147,29 @@ public abstract class FullTextSection {
      * @param value new value for the segment.
      * @return this section.
      */
-    public final FullTextSection int__(final int index, final int value) {
+    public FullTextSection int__(final int index, final int value) {
         return value(index, value);
     }
 
     // ------------------------------------------------------------------------------------------------------------ date
-    public final LocalDate date_(final int index) {
+    public LocalDate date_(final int index) {
         final var value = getValue(index);
         return LocalDate.parse(String.valueOf(value), FullTextSegmentCodecConstants.FORMATTER_DATE);
     }
 
-    public final FullTextSection date_(final int index, final LocalDate value) {
+    public FullTextSection date_(final int index, final LocalDate value) {
         Objects.requireNonNull(value, "value is null");
         setValue(index, FullTextSegmentCodecConstants.FORMATTER_DATE.format(value));
         return this;
     }
 
     // ------------------------------------------------------------------------------------------------------------ time
-    public final LocalTime time_(final int index) {
+    public LocalTime time_(final int index) {
         final var value = getValue(index);
         return LocalTime.parse(String.valueOf(value), FullTextSegmentCodecConstants.FORMATTER_TIME);
     }
 
-    public final FullTextSection time_(final int index, final LocalTime value) {
+    public FullTextSection time_(final int index, final LocalTime value) {
         Objects.requireNonNull(value, "value is null");
         setValue(index, FullTextSegmentCodecConstants.FORMATTER_TIME.format(value));
         return this;

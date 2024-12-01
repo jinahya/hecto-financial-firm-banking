@@ -38,8 +38,8 @@ abstract class FullTextSegment {
         return super.toString() + '{' +
                 "codec=" + codec +
                 ",length=" + length +
-                ",previous=" + previous +
                 ",offset=" + offset +
+                ",previous=" + previous +
                 ",tag=" + tag +
                 '}';
     }
@@ -90,7 +90,6 @@ abstract class FullTextSegment {
     }
 
     // ------------------------------------------------------------------------------------------------------------- tag
-
     public String getTag() {
         return tag;
     }

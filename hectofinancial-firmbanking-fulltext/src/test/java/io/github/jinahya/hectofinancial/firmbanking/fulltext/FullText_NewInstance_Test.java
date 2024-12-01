@@ -41,6 +41,8 @@ class FullText_NewInstance_Test {
                         assertThat(s.length).isPositive();
                     });
         });
+        assertThat(text.getTextCode()).isEqualTo(textCode);
+        assertThat(text.getTaskCode()).isEqualTo(taskCode);
         log.debug("decoded: [{}]", text.getDataString());
         try (var resource = FullText_NewInstance_Test.class.getResourceAsStream(resourceName)) {
             assertThat(resource).isNotNull();
