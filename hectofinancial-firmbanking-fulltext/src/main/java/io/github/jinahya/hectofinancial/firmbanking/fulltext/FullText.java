@@ -47,6 +47,14 @@ public abstract class FullText {
         return text;
     }
 
+    public static FullText newInstance(final FullTextCategory category, final ByteBuffer buffer) {
+        Objects.requireNonNull(category, "category is null");
+        Objects.requireNonNull(buffer, "buffer is null");
+        final var textCode = category.getTextCode(buffer);
+        final var taskCode = category.getTaskCode(buffer);
+        return newInstance(category, textCode, taskCode).setData(buffer.clear());
+    }
+
     /**
      * Reads an instance of specified category, from specified channel.
      *
@@ -60,9 +68,7 @@ public abstract class FullText {
             throws IOException {
         Objects.requireNonNull(category, "category is null");
         final var buffer = FullTextUtils.readBuffer(category, channel);
-        final var textCode = category.getTextCode(buffer);
-        final var taskCode = category.getTaskCode(buffer);
-        return newInstance(category, textCode, taskCode).setData(buffer.clear());
+        return newInstance(category, buffer);
     }
 
     /**
@@ -83,16 +89,14 @@ public abstract class FullText {
             throw new IllegalArgumentException("channel is not open");
         }
         Objects.requireNonNull(cipher, "cipher is null");
-        final var buffer = FullTextUtils.readBuffer(category, channel);
-        final var output = ByteBuffer.allocate(category.textLength);
+        final var encrypted = FullTextUtils.readBuffer(category, channel);
+        final var decrypted = ByteBuffer.allocate(encrypted.capacity() << 1);
         try {
-            cipher.doFinal(buffer.clear(), output);
+            final var bytes = cipher.doFinal(encrypted.clear(), decrypted);
+            return newInstance(category, ByteBuffer.wrap(Arrays.copyOf(decrypted.array(), bytes)));
         } catch (final Exception e) {
             throw new RuntimeException("failed to decrypt", e);
         }
-        final var textCode = category.getTextCode(buffer);
-        final var taskCode = category.getTaskCode(buffer);
-        return newInstance(category, textCode, taskCode).setData(output.clear());
     }
 
     // ---------------------------------------------------------------------------------------------------- CONSTRUCTORS
@@ -112,7 +116,7 @@ public abstract class FullText {
         Arrays.fill(buffer.array(), (byte) 0x20);
     }
 
-    // JUST FOR MOCKING
+    // JUST FOR THE MOCKING
     FullText() {
         super();
         category = null;
@@ -229,17 +233,45 @@ public abstract class FullText {
     }
 
     // ---------------------------------------------------------------------------------------------------------- buffer
+
+    /**
+     * Returns a string representation of the internal data buffer.
+     *
+     * @return a string representation of the internal data buffer
+     */
     public String getDataString() {
         return FullTextSegmentCodecX.CHARSET.decode(buffer.clear()).toString();
     }
 
+    /**
+     * Puts internal data buffer to specified buffer.
+     *
+     * @param dst the buffer.
+     * @param <T> buffer type parameter
+     * @return given {@code dst}.
+     */
     @SuppressWarnings({"unchecked"})
     public <T extends ByteBuffer> T getData(final T dst) {
         return (T) Objects.requireNonNull(dst, "dst is null").put(buffer.clear());
     }
 
+    /**
+     * Sets internal data buffer's data to specified array.
+     *
+     * @param dst the array.
+     * @return given {@code dst}.
+     */
     public byte[] getData(final byte[] dst) {
         return ByteBuffer.wrap(Objects.requireNonNull(dst, "dst is null")).array();
+    }
+
+    /**
+     * Returns a copy of the internal data buffer's data.
+     *
+     * @return an array of internal data buffer's content.
+     */
+    public byte[] getData() {
+        return getData(new byte[buffer.capacity()]);
     }
 
     FullText setData(final ByteBuffer src) {

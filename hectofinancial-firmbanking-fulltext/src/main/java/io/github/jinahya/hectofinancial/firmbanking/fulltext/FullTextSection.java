@@ -23,7 +23,7 @@ public abstract class FullTextSection {
      * @return a new instance for the {@code 공통부} for {@code category}.
      */
     static FullTextSection newHeadInstance(final FullTextCategory category) {
-        return new FullTextSection(FullTextSectionUtils.loadSegments(category.name() + ".segments")) {
+        return new FullTextSection(FullTextSectionUtils.loadHeadSegments(category)) {
         };
     }
 
@@ -44,8 +44,8 @@ public abstract class FullTextSection {
         Objects.requireNonNull(taskCode, "taskCode is null");
         final var segments = MAP.computeIfAbsent(category, tc -> new HashMap<>())
                 .computeIfAbsent(textCode, tc -> Collections.synchronizedMap(new HashMap<>()))
-                .computeIfAbsent(taskCode, tc -> FullTextSectionUtils.loadSegments(
-                        category.name() + textCode + '_' + tc + ".segments"
+                .computeIfAbsent(taskCode, tc -> FullTextSectionUtils.loadBodySegments(
+                        category, textCode, tc
                 ));
         return new FullTextSection(segments) {
         };

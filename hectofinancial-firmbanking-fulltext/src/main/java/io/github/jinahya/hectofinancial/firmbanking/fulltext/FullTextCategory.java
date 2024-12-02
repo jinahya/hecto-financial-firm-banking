@@ -95,8 +95,10 @@ public enum FullTextCategory {
     // -----------------------------------------------------------------------------------------------------------------
     final int headLength;
 
+    @Deprecated(forRemoval = true)
     final int bodyLength;
 
+    @Deprecated(forRemoval = true)
     final int textLength;
 
     private final FullTextSegment textCodeSegment;

@@ -23,21 +23,21 @@ class FullText_Io_Test {
         return FullTextSectionUtils_LoadSegments_Test.getTextCategoryTextCodeAndTaskCodeArgumentsStream();
     }
 
-    @DisplayName("newInstance(textCode, taskCode)")
-    @MethodSource({
-            "getTextCategoryTextCodeAndTaskCodeArgumentsStream"
-    })
-    @ParameterizedTest
-    void __(final FullTextCategory category, final String textCode, final String taskCode)
-            throws IOException {
-        final var text = FullText.newInstance(category, textCode, taskCode);
-        final byte[] written;
-        {
-            final var baos = new ByteArrayOutputStream();
-            final var result = text.write(Channels.newChannel(baos));
-            assertThat(result).isSameAs(text);
-            written = baos.toByteArray();
-            assertThat(written).hasSize(category.textLength + FullTextUtils.LENGTH_BYTES);
-        }
-    }
+//    @DisplayName("newInstance(textCode, taskCode)")
+//    @MethodSource({
+//            "getTextCategoryTextCodeAndTaskCodeArgumentsStream"
+//    })
+//    @ParameterizedTest
+//    void __(final FullTextCategory category, final String textCode, final String taskCode)
+//            throws IOException {
+//        final var text = FullText.newInstance(category, textCode, taskCode);
+//        final byte[] written;
+//        {
+//            final var baos = new ByteArrayOutputStream();
+//            final var result = text.write(Channels.newChannel(baos));
+//            assertThat(result).isSameAs(text);
+//            written = baos.toByteArray();
+//            assertThat(written).hasSize(category.textLength + FullTextUtils.LENGTH_BYTES);
+//        }
+//    }
 }

@@ -13,6 +13,7 @@ public final class FullTextConstants {
 
     static final int TASK_CODE_LENGTH_D = 3;
 
+    @Deprecated(forRemoval = true) // 어떤 건 300
     static final int LENGTH_BODY_D = 200;
 
     public static final int SEGMENT_INDEX_HEAD_DATE_D = 8;

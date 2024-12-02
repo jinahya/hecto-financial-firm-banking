@@ -17,11 +17,7 @@ final class FullTextUtils {
     static void writeBuffer(final FullTextCategory category, final WritableByteChannel channel, final ByteBuffer buffer)
             throws IOException {
         Objects.requireNonNull(category, "category is null");
-        if (Objects.requireNonNull(buffer, "buffer is null").capacity() != category.textLength) {
-            throw new IllegalArgumentException(
-                    "buffer.capacity(" + buffer.capacity() + ") != category.textLength(" + category.textLength + ")"
-            );
-        }
+        Objects.requireNonNull(buffer, "buffer is null");
         if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
             throw new IllegalArgumentException("channel is not open");
         }
@@ -53,11 +49,6 @@ final class FullTextUtils {
                 }
             }
             length = LENGTH_CODEC.decode(b.array(), LENGTH_BYTES);
-        }
-        if (length != category.textLength) {
-            throw new IOException(
-                    "invalid length(" + length + ") read for category.textLength(" + category.textLength + ")"
-            );
         }
         final var b = ByteBuffer.allocate(length);
         while (b.hasRemaining()) {
