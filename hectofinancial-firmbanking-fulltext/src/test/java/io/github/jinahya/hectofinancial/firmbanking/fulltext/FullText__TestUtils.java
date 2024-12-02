@@ -11,7 +11,9 @@ final class FullText__TestUtils {
         return Stream.of(
                 Arguments.of(FullTextCategory.D, "1000", "100"),
                 Arguments.of(FullTextCategory.D, "1000", "200"),
-                Arguments.of(FullTextCategory.D, "2000", "100")
+                Arguments.of(FullTextCategory.D, "1000", "500"),
+                Arguments.of(FullTextCategory.D, "2000", "100"),
+                Arguments.of(FullTextCategory.D, "2000", "200")
         );
     }
 

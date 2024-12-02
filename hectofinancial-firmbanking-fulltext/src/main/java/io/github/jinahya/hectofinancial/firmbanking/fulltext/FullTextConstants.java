@@ -15,6 +15,10 @@ public final class FullTextConstants {
 
     static final int LENGTH_BODY_D = 200;
 
+    public static final int SEGMENT_INDEX_HEAD_DATE_D = 8;
+
+    public static final int SEGMENT_INDEX_HEAD_TIME_D = 9;
+
     // -----------------------------------------------------------------------------------------------------------------
     static final int LENGTH_HEAD_F = 100;
 
@@ -27,6 +31,10 @@ public final class FullTextConstants {
     static final int TASK_CODE_LENGTH_F = 3;
 
     static final int LENGTH_BODY_F = 1900;
+
+    public static final int SEGMENT_INDEX_HEAD_DATE_F = 8;
+
+    public static final int SEGMENT_INDEX_HEAD_TIME_F = 9;
 
     // -----------------------------------------------------------------------------------------------------------------
     public static final int SECTION_INDEX_HEAD = 1;

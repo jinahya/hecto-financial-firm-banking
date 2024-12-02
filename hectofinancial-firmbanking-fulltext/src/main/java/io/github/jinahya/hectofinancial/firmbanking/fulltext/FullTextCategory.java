@@ -1,31 +1,80 @@
 package io.github.jinahya.hectofinancial.firmbanking.fulltext;
 
 import java.nio.ByteBuffer;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 // -----------------------------------------------------------------------------------------------------------------
 public enum FullTextCategory {
 
     /**
-     * Value for the {@code 실시간펌뱅킹}
+     * The value for the {@code 실시간펌뱅킹}
      */
-    D(FullTextConstants.LENGTH_HEAD_D, FullTextConstants.LENGTH_BODY_D, FullTextConstants.TEXT_CODE_OFFSET_D,
-      FullTextConstants.TEXT_CODE_LENGTH_D, FullTextConstants.TASK_CODE_OFFSET_D, FullTextConstants.TASK_CODE_LENGTH_D),
+    D(FullTextConstants.LENGTH_HEAD_D, FullTextConstants.LENGTH_BODY_D,
+      _Range.from(FullTextConstants.TEXT_CODE_OFFSET_D, FullTextConstants.TEXT_CODE_LENGTH_D),
+      _Range.from(FullTextConstants.TASK_CODE_OFFSET_D, FullTextConstants.TASK_CODE_LENGTH_D)) { // @formatter:off
+        @Override
+        LocalDate getHeadDate(final FullTextSection section) {
+            return section.date_(FullTextConstants.SEGMENT_INDEX_HEAD_DATE_D);
+        }
+        @Override
+        void setHeadDate(final FullTextSection section, final LocalDate headDate) {
+            section.date_(FullTextConstants.SEGMENT_INDEX_HEAD_DATE_D, headDate);
+        }
+        @Override
+        LocalTime getHeadTime(final FullTextSection section) {
+            return section.time_(FullTextConstants.SEGMENT_INDEX_HEAD_TIME_D);
+        }
+        @Override
+        void setHeadTime(final FullTextSection section, final LocalTime headTime) {
+            section.time_(FullTextConstants.SEGMENT_INDEX_HEAD_TIME_D, headTime);
+        } // @formatter:on
+    },
 
     /**
-     * Value for the {@code 실시간펌뱅킹(외화)}
+     * The value for the {@code 실시간펌뱅킹(외화)}
      */
-    F(FullTextConstants.LENGTH_HEAD_F, FullTextConstants.LENGTH_BODY_F, FullTextConstants.TEXT_CODE_OFFSET_F,
-      FullTextConstants.TEXT_CODE_LENGTH_F, FullTextConstants.TASK_CODE_OFFSET_F, FullTextConstants.TASK_CODE_LENGTH_F);
+    F(FullTextConstants.LENGTH_HEAD_F, FullTextConstants.LENGTH_BODY_F,
+      _Range.from(FullTextConstants.TEXT_CODE_OFFSET_F, FullTextConstants.TEXT_CODE_LENGTH_F),
+      _Range.from(FullTextConstants.TASK_CODE_OFFSET_F, FullTextConstants.TASK_CODE_LENGTH_F)) { // @formatter:off
+        @Override
+        LocalDate getHeadDate(final FullTextSection section) {
+            return section.date_(FullTextConstants.SEGMENT_INDEX_HEAD_DATE_F);
+        }
+        @Override
+        void setHeadDate(final FullTextSection section, final LocalDate headDate) {
+            section.date_(FullTextConstants.SEGMENT_INDEX_HEAD_DATE_F, headDate);
+        }
+        @Override
+        LocalTime getHeadTime(final FullTextSection section) {
+            return section.time_(FullTextConstants.SEGMENT_INDEX_HEAD_TIME_F);
+        }
+        @Override
+        void setHeadTime(final FullTextSection section, final LocalTime headTime) {
+            section.time_(FullTextConstants.SEGMENT_INDEX_HEAD_TIME_F, headTime);
+        } // @formatter:on
+    };
 
-    FullTextCategory(final int headLength, final int bodyLength, final int textCodeOffset, final int textCodeLength,
-                     final int taskCodeOffset, final int taskCodeLength) {
+    // ---------------------------------------------------------------------------------------------------- CONSTRUCTORS
+    FullTextCategory(final int headLength, final int bodyLength, final _Range textCodeRange,
+                     final _Range taskCodeRange) {
         this.headLength = headLength;
         this.bodyLength = bodyLength;
         textLength = this.headLength + this.bodyLength;
-        textCodeSegment = FullTextSegment.newInstanceOfX(textCodeLength).offset(textCodeOffset);
-        taskCodeSegment = FullTextSegment.newInstanceOfX(taskCodeLength).offset(taskCodeOffset);
+        textCodeSegment = FullTextSegment.newInstanceOfX(textCodeRange.length()).offset(textCodeRange.offset());
+        taskCodeSegment = FullTextSegment.newInstanceOfX(taskCodeRange.length()).offset(taskCodeRange.offset());
     }
 
+    // -----------------------------------------------------------------------------------------------------------------
+    abstract LocalDate getHeadDate(final FullTextSection section);
+
+    abstract void setHeadDate(final FullTextSection section, final LocalDate headDate);
+
+    abstract LocalTime getHeadTime(final FullTextSection section);
+
+    abstract void setHeadTime(final FullTextSection section, final LocalTime headTime);
+
+    // ------------------------------------------------------------------------------------------------- textCodeSegment
     String getTextCode(final ByteBuffer buffer) {
         return textCodeSegment.getValue(buffer);
     }
@@ -34,6 +83,7 @@ public enum FullTextCategory {
         textCodeSegment.setValue(buffer, textCode);
     }
 
+    // ------------------------------------------------------------------------------------------------- taskCodeSegment
     String getTaskCode(final ByteBuffer buffer) {
         return taskCodeSegment.getValue(buffer);
     }
@@ -43,11 +93,11 @@ public enum FullTextCategory {
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-    private final int headLength;
+    final int headLength;
 
-    private final int bodyLength;
+    final int bodyLength;
 
-    public final int textLength;
+    final int textLength;
 
     private final FullTextSegment textCodeSegment;
 

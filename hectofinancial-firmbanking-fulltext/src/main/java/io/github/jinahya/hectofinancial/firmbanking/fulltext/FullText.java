@@ -15,9 +15,11 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * A class for {@code 전문} of {@code 실시간펌뱅킹} and {@code 실시간펌뱅킹(외화)}.
+ * A class for {@code 전문(全文)} of {@code 실시간펌뱅킹} and {@code 실시간펌뱅킹(외화)}.
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
+ * @see <a href="https://develop.sbsvc.online/27/onlineDocList.do">실시간펌뱅킹</a>
+ * @see <a href="https://develop.sbsvc.online/31/onlineDocList.do">실시간펌뱅킹(외화)</a>
  */
 public abstract class FullText {
 
@@ -110,6 +112,14 @@ public abstract class FullText {
         Arrays.fill(buffer.array(), (byte) 0x20);
     }
 
+    // JUST FOR MOCKING
+    FullText() {
+        super();
+        category = null;
+        sections = null;
+        buffer = null;
+    }
+
     // -----------------------------------------------------------------------------------------------------------------
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -179,9 +189,7 @@ public abstract class FullText {
      * @see #setHeadDate(LocalDate)
      */
     public LocalDate getHeadDate() {
-        return applySection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
-            return s.date_(8);
-        });
+        return applySection(FullTextConstants.SECTION_INDEX_HEAD, s -> category.getHeadDate(s));
     }
 
     /**
@@ -193,21 +201,17 @@ public abstract class FullText {
      * @see #getHeadDate()
      */
     public void setHeadDate(final LocalDate headDate) {
-        acceptSection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
-            s.date_(8, headDate);
-        });
+        Objects.requireNonNull(headDate, "headDate is null");
+        acceptSection(FullTextConstants.SECTION_INDEX_HEAD, s -> category.setHeadDate(s, headDate));
     }
 
     public LocalTime getHeadTime() {
-        return applySection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
-            return s.time_(9);
-        });
+        return applySection(FullTextConstants.SECTION_INDEX_HEAD, s -> category.getHeadTime(s));
     }
 
     public void setHeadTime(final LocalTime headTime) {
-        acceptSection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
-            s.time_(8, headTime);
-        });
+        Objects.requireNonNull(headTime, "headTime is null");
+        acceptSection(FullTextConstants.SECTION_INDEX_HEAD, s -> category.setHeadTime(s, headTime));
     }
 
     public LocalDateTime getHeadDateTime() {
@@ -215,6 +219,7 @@ public abstract class FullText {
     }
 
     public void setHeadDateTime(final LocalDateTime headDateTime) {
+        Objects.requireNonNull(headDateTime, "headDateTime is null");
         setHeadDate(LocalDate.from(headDateTime));
         setHeadTime(LocalTime.from(headDateTime));
     }
