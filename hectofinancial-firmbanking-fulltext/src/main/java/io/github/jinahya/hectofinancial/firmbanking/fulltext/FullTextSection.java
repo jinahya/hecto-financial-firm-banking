@@ -121,17 +121,17 @@ public class FullTextSection {
     }
 
     /**
-     * Gets an {@code int} value, of the segment of specified index, from specified buffer.
+     * Returns the value, of a segment of specified index, in {@code int}.
      *
      * @param index the index of the segment.
-     * @return the value of the segment of specified index as {@code int}.
+     * @return the value of the segment of specified index in {@code int}.
      */
     public int int__(final int index) {
         return this.<Integer>getValue(index);
     }
 
     /**
-     * Sets specified new value, of the segment of specified index, to specified buffer.
+     * Sets specified value of {@code int} to the segment of specified index.
      *
      * @param index the index of the segment.
      * @param value new value for the segment.
@@ -164,17 +164,34 @@ public class FullTextSection {
     }
 
     // ---------------------------------------------------------------------------------------------------------- length
+
+    /**
+     * Returns the length of this section, in bytes.
+     *
+     * @return the length of this section, in bytes
+     */
     public int getLength() {
         return length;
     }
 
     // ------------------------------------------------------------------------------------------------------------ data
-    public FullTextSection resetData() {
+
+    /**
+     * Resets this section by setting data with zeros.
+     *
+     * @return this section.
+     */
+    public FullTextSection reset() {
         Arrays.fill(data.array(), (byte) 0x20);
         return this;
     }
 
-    public String getDataString() {
+    /**
+     * Returns a string representation of this section.
+     *
+     * @return a string representation of this section.
+     */
+    public String toEncodedString() {
         return FullTextSegmentCodecX.CHARSET.decode(data.clear()).toString();
     }
 

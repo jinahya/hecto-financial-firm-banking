@@ -273,7 +273,7 @@ public class FullText {
      */
     public String getDataString() {
         return sections.stream()
-                .map(FullTextSection::getDataString)
+                .map(FullTextSection::toEncodedString)
                 .collect(Collectors.joining());
     }
 
