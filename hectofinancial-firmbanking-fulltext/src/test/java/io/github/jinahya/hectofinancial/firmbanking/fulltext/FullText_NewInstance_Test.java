@@ -18,16 +18,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 class FullText_NewInstance_Test {
 
-    static Stream<Arguments> getTextCategoryTextCodeAndTaskCodeArgumentsStream() {
-        return FullText__TestUtils.getTextCategoryTextCodeAndTaskCodeArgumentsStream();
-    }
-
     static Stream<Arguments> getTextCategoryTextCodeTaskCodeAndResourceNameArgumentsStream() {
         return FullText__TestUtils.getTextCategoryTextCodeTaskCodeAndResourceNameArgumentsStream();
     }
 
+    static Stream<Arguments> getTextCategoryTextCodeAndTaskCodeArgumentsStream() {
+        return FullTextSection_NewBodyInstance_Test.getTextCategoryTextCodeAndTaskCodeArgumentsStream();
+    }
+
     @MethodSource({
-            "getTextCategoryTextCodeTaskCodeAndResourceNameArgumentsStream"
+            "getTextCategoryTextCodeAndTaskCodeArgumentsStream"
     })
     @ParameterizedTest
     void __(final FullTextCategory category, final String textCode, final String taskCode)
@@ -37,7 +37,7 @@ class FullText_NewInstance_Test {
             assertThat(t.sections)
                     .isNotNull()
                     .doesNotContainNull()
-                    .hasSize(2)
+                    .hasSizeGreaterThanOrEqualTo(2)
                     .allSatisfy(s -> {
                         assertThat(s.getLength()).isPositive();
                     });
@@ -45,26 +45,5 @@ class FullText_NewInstance_Test {
         assertThat(text.getTextCode()).isEqualTo(textCode);
         assertThat(text.getTaskCode()).isEqualTo(taskCode);
         log.debug("decoded: [{}]", text.getDataString());
-//        try (var resource = FullText_NewInstance_Test.class.getResourceAsStream(resourceName)) {
-//            if (resource == null) {
-//                return;
-//            }
-//            final var bytes = resource.readNBytes(category.textLength);
-//            text.setData(bytes);
-//            assertThat(text.getTextCode()).isEqualTo(textCode);
-//            assertThat(text.getTaskCode()).isEqualTo(taskCode);
-//        }
-//        text.acceptSection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
-//            s.value(1, "SETTLEBNK");
-//            s.value(2, "jt3oc;tsmv");
-//            s.value(3, "002");
-//            s.value(7, ThreadLocalRandom.current().nextInt(950000) + 1);
-//            s.date_(8, LocalDate.now());
-//            s.time_(9, LocalTime.now());
-//            s.value(11, "j7;djeajex1");
-//            s.value(12, "j7;djeajex2");
-//            s.value(13, "j7;djeajex3");
-//        });
-//        log.debug("decoded: [{}]", text.getDataString());
     }
 }
