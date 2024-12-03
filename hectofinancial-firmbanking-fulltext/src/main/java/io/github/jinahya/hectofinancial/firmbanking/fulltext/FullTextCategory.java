@@ -52,6 +52,13 @@ public enum FullTextCategory {
     }
 
     // -----------------------------------------------------------------------------------------------------------------
+
+    /**
+     * Returns the value of {@code 전송일자} from specified head section.
+     *
+     * @param headSection the head section.
+     * @return the value of {@code 전송일자} from {@code headSection}.
+     */
     abstract LocalDate getHeadDate(final FullTextSection headSection);
 
     abstract void setHeadDate(final FullTextSection headSection, final LocalDate headDate);
@@ -61,21 +68,21 @@ public enum FullTextCategory {
     abstract void setHeadTime(final FullTextSection headSection, final LocalTime headTime);
 
     // ------------------------------------------------------------------------------------------------- textCodeSegment
-    String getHeadTextCode(final ByteBuffer buffer) {
-        return headTextCodeSegment.getValue(buffer);
+    String getHeadTextCode(final ByteBuffer data) {
+        return headTextCodeSegment.getValue(data);
     }
 
-    void setHeadTextCode(final ByteBuffer buffer, final String textCode) {
-        headTextCodeSegment.setValue(buffer, textCode);
+    void setHeadTextCode(final ByteBuffer data, final String textCode) {
+        headTextCodeSegment.setValue(data, textCode);
     }
 
     // ------------------------------------------------------------------------------------------------- taskCodeSegment
-    String getHeadTaskCode(final ByteBuffer buffer) {
-        return headTaskCodeSegment.getValue(buffer);
+    String getHeadTaskCode(final ByteBuffer data) {
+        return headTaskCodeSegment.getValue(data);
     }
 
-    void setHeadTaskCode(final ByteBuffer buffer, final String taskCode) {
-        headTaskCodeSegment.setValue(buffer, taskCode);
+    void setHeadTaskCode(final ByteBuffer data, final String taskCode) {
+        headTaskCodeSegment.setValue(data, taskCode);
     }
 
     // -----------------------------------------------------------------------------------------------------------------

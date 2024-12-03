@@ -205,25 +205,63 @@ public class FullText {
         acceptSection(FullTextConstants.SECTION_INDEX_HEAD, s -> category.setHeadDate(s, headDate));
     }
 
+    /**
+     * Returns {@code 전송시간} segment's value of section {@value FullTextConstants#SECTION_INDEX_HEAD}.
+     *
+     * @return the value of {@code 전송시간} segment.
+     * @see FullTextConstants#SECTION_INDEX_HEAD
+     * @see #setHeadDate(LocalDate)
+     */
     public LocalTime getHeadTime() {
         return applySection(FullTextConstants.SECTION_INDEX_HEAD, category::getHeadTime);
     }
 
+    /**
+     * Sets {@code 전송시간} segment's value, of section {@value FullTextConstants#SECTION_INDEX_HEAD}, with specified
+     * value.
+     *
+     * @param headTime new value for the {@code 전송시간} segment.
+     * @see FullTextConstants#SECTION_INDEX_HEAD
+     * @see #getHeadDate()
+     */
     public void setHeadTime(final LocalTime headTime) {
         Objects.requireNonNull(headTime, "headTime is null");
         acceptSection(FullTextConstants.SECTION_INDEX_HEAD, s -> category.setHeadTime(s, headTime));
     }
 
+    /**
+     * Returns {@code 전송일자/전송시간} segment's value of section {@value FullTextConstants#SECTION_INDEX_HEAD}.
+     *
+     * @return the value of {@code 전송일자/전송시간} segment.
+     * @see FullTextConstants#SECTION_INDEX_HEAD
+     * @see #setHeadDate(LocalDate)
+     */
     public LocalDateTime getHeadDateTime() {
         return LocalDateTime.of(getHeadDate(), getHeadTime());
     }
 
+    /**
+     * Sets {@code 전송일자/전송시간} segment's value, of section {@value FullTextConstants#SECTION_INDEX_HEAD}, with specified
+     * value.
+     *
+     * @param headDateTime new value for the {@code 전송일자/전송시간} segment.
+     * @see FullTextConstants#SECTION_INDEX_HEAD
+     * @see #getHeadDate()
+     * @see #setHeadDateTimeAsNow()
+     */
     public void setHeadDateTime(final LocalDateTime headDateTime) {
         Objects.requireNonNull(headDateTime, "headDateTime is null");
         setHeadDate(LocalDate.from(headDateTime));
         setHeadTime(LocalTime.from(headDateTime));
     }
 
+    /**
+     * Sets {@code 전송일자/전송시간} segment's value, of section {@value FullTextConstants#SECTION_INDEX_HEAD}, with
+     * {@link LocalDateTime#now()}.
+     *
+     * @see FullTextConstants#SECTION_INDEX_HEAD
+     * @see #setHeadDateTime(LocalDateTime)
+     */
     public void setHeadDateTimeAsNow() {
         setHeadDateTime(LocalDateTime.now());
     }
