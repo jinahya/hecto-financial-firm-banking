@@ -15,19 +15,18 @@ final class FullTextSectionUtils {
         try (final var resource = FullTextSectionUtils.class.getResourceAsStream(name)) {
             Objects.requireNonNull(resource, "no resource loaded for '" + name + "'");
             try (var s = new Scanner(resource, StandardCharsets.UTF_8)) {
-                while (s.hasNext()) {
+                for (int offset = 0; s.hasNext(); ) {
                     final var type = s.next();
                     final var length = s.nextInt();
                     final var tag = s.nextLine();
+                    final FullTextSegment segment;
                     if ("X".equals(type)) {
-                        final var segment = FullTextSegment.newInstanceOfX(length);
-                        segment.setTag(tag);
-                        segments.add(segment);
+                        segment = FullTextSegment.newInstanceOfX(offset, length, tag);
                     } else {
-                        final var segment = FullTextSegment.newInstanceOf9(length);
-                        segment.setTag(tag);
-                        segments.add(segment);
+                        segment = FullTextSegment.newInstanceOf9(offset, length, tag);
                     }
+                    segments.add(segment);
+                    offset += segment.length;
                 }
             }
         } catch (final IOException ioe) {
@@ -36,6 +35,7 @@ final class FullTextSectionUtils {
         return segments;
     }
 
+    // ------------------------------------------------------------------------------------------------------------ head
     static String getHeadSegmentsResourceName(final FullTextCategory category) {
         return category.name() + ".head.segments";
     }
@@ -46,6 +46,7 @@ final class FullTextSectionUtils {
         return loadSegments(name);
     }
 
+    // ------------------------------------------------------------------------------------------------------------ body
     static String getBodySegmentsResourceName(final FullTextCategory category, final String textCode,
                                               final String taskCode) {
         return category.name() + textCode + "_" + taskCode + ".body.segments";

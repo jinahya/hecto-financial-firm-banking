@@ -10,50 +10,47 @@ import java.util.Objects;
 final class FullTextUtils {
 
     // -----------------------------------------------------------------------------------------------------------------
-    static final int LENGTH_BYTES = 4;
+    private static final int LENGTH_BYTES = 4;
 
     private static final FullTextSegmentCodec<Integer> LENGTH_CODEC = FullTextSegmentCodec.of9();
 
-    static void writeBuffer(final FullTextCategory category, final WritableByteChannel channel, final ByteBuffer buffer)
-            throws IOException {
-        Objects.requireNonNull(category, "category is null");
-        Objects.requireNonNull(buffer, "buffer is null");
+    static void writeData(final WritableByteChannel channel, final ByteBuffer data) throws IOException {
         if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
             throw new IllegalArgumentException("channel is not open");
         }
+        Objects.requireNonNull(data, "data is null");
         // write length
-        for (var b = ByteBuffer.wrap(LENGTH_CODEC.encode(buffer.capacity(), LENGTH_BYTES)); b.hasRemaining(); ) {
+        for (var b = ByteBuffer.wrap(LENGTH_CODEC.encode(data.capacity(), LENGTH_BYTES)); b.hasRemaining(); ) {
             final var bytes = channel.write(b);
             assert bytes >= 0;
         }
         // write text
-        for (buffer.clear(); buffer.hasRemaining(); ) {
-            final var bytes = channel.write(buffer);
+        for (data.clear(); data.hasRemaining(); ) {
+            final var bytes = channel.write(data);
             assert bytes >= 0;
         }
     }
 
-    static ByteBuffer readBuffer(final FullTextCategory category, final ReadableByteChannel channel)
-            throws IOException {
-        Objects.requireNonNull(category, "category is null");
+    static ByteBuffer readData(final ReadableByteChannel channel) throws IOException {
         if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
             throw new IllegalArgumentException("channel is not open");
         }
         // read length
         final int length;
         {
-            final var b = ByteBuffer.allocate(LENGTH_BYTES);
-            while (b.hasRemaining()) {
+            final var a = new byte[LENGTH_BYTES];
+            for (final var b = ByteBuffer.wrap(a); b.hasRemaining(); ) {
                 if (channel.read(b) == -1) {
                     throw new EOFException("unexpected end-of-file while reading length bytes");
                 }
             }
-            length = LENGTH_CODEC.decode(b.array(), LENGTH_BYTES);
+            length = LENGTH_CODEC.decode(a, a.length);
         }
+        // read text
         final var b = ByteBuffer.allocate(length);
         while (b.hasRemaining()) {
             if (channel.read(b) == -1) {
-                throw new EOFException("unexpected end-of-file while reading a full text");
+                throw new EOFException("unexpected end-of-file while reading text bytes");
             }
         }
         return b;

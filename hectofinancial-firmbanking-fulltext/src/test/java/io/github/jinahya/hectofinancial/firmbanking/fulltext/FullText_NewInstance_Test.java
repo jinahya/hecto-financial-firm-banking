@@ -9,9 +9,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,7 +39,7 @@ class FullText_NewInstance_Test {
                     .doesNotContainNull()
                     .hasSize(2)
                     .allSatisfy(s -> {
-                        assertThat(s.length).isPositive();
+                        assertThat(s.getLength()).isPositive();
                     });
         });
         assertThat(text.getTextCode()).isEqualTo(textCode);

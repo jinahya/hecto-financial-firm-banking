@@ -27,7 +27,7 @@ class FullTextSegmentCodecX
             final var bytes = decoded.getBytes(CHARSET);
             if (bytes.length > encoded.length) {
                 throw new IllegalArgumentException(
-                        "decoded.bytes.length(" + bytes.length + " > encoded.length(" + encoded.length + ")"
+                        "decoded.bytes.length(" + bytes.length + ") > encoded.length(" + encoded.length + ")"
                 );
             }
             System.arraycopy(bytes, 0, encoded, 0, bytes.length);

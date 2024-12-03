@@ -2,33 +2,32 @@ package io.github.jinahya.hectofinancial.firmbanking.fulltext;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
-import java.util.Optional;
 
-abstract class FullTextSegment {
+class FullTextSegment {
 
-    // -----------------------------------------------------------------------------------------------------------------
-    private static FullTextSegment newInstance(final int length, final FullTextSegmentCodec<?> codec) {
-        return new FullTextSegment(codec, length) {
+    static FullTextSegment newInstanceOf9(final int offset, final int length, final String tag) {
+        return new FullTextSegment(offset, length, FullTextSegmentCodec.of9(), tag) {
         };
     }
 
-    static FullTextSegment newInstanceOf9(final int length) {
-        return newInstance(length, FullTextSegmentCodec.of9());
-    }
-
-    static FullTextSegment newInstanceOfX(final int length) {
-        return newInstance(length, FullTextSegmentCodec.ofX());
+    static FullTextSegment newInstanceOfX(final int offset, final int length, final String tag) {
+        return new FullTextSegment(offset, length, FullTextSegmentCodec.ofX(), tag);
     }
 
     // ---------------------------------------------------------------------------------------------------- CONSTRUCTORS
-    private FullTextSegment(final FullTextSegmentCodec<?> codec, final int length) {
+    private FullTextSegment(final int offset, final int length, final FullTextSegmentCodec<?> codec, final String tag) {
         super();
-        Objects.requireNonNull(codec, "codec is null");
+        if (offset < 0) {
+            throw new IllegalArgumentException("offset(" + offset + ") is negative");
+        }
         if (length <= 0) {
             throw new IllegalArgumentException("length(" + length + ") is not positive");
         }
-        this.codec = codec;
+        this.offset = offset;
         this.length = length;
+        this.codec = Objects.requireNonNull(codec, "codec is null");
+        this.tag = Objects.requireNonNull(tag, "tag is null");
+
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -36,76 +35,37 @@ abstract class FullTextSegment {
     @Override
     public String toString() {
         return super.toString() + '{' +
-                "codec=" + codec +
+                "offset=" + offset +
                 ",length=" + length +
-                ",offset=" + offset +
-                ",previous=" + previous +
-                ",tag=" + tag +
+                "codec=" + codec +
+                "tag=" + tag +
                 '}';
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-    <V> V getValue(final ByteBuffer buffer) {
+    <V> V getValue(final ByteBuffer data) {
         final var dst = new byte[length];
-        buffer.get(offset, dst);
-        return (V) codec.decode(dst, length);
+        data.get(offset, dst);
+        return (V) codec.decode(dst, dst.length);
     }
 
-    void setValue(final ByteBuffer buffer, final Object value) {
+    void setValue(final ByteBuffer data, final Object value) {
         final var src = codec.encode(value, length);
-        buffer.put(offset, src);
+        data.put(offset, src);
     }
+
+    // ----------------------------------------------------------------------------------------------------------- range
 
     // ----------------------------------------------------------------------------------------------------------- codec
 
-    // ---------------------------------------------------------------------------------------------------------- length
-
-    // ---------------------------------------------------------------------------------------------------------- offset
-    int getOffset() {
-        return offset;
-    }
-
-    void setOffset(final int offset) {
-        this.offset = offset;
-    }
-
-    FullTextSegment offset(final int offset) {
-        setOffset(offset);
-        return this;
-    }
-
-    // -------------------------------------------------------------------------------------------------------- previous
-    FullTextSegment getPrevious() {
-        return previous;
-    }
-
-    void setPrevious(final FullTextSegment previous) {
-        this.previous = previous;
-        setOffset(Optional.ofNullable(this.previous).map(p -> p.offset + p.length).orElse(0));
-    }
-
-    FullTextSegment previous(final FullTextSegment previous) {
-        setPrevious(previous);
-        return this;
-    }
-
     // ------------------------------------------------------------------------------------------------------------- tag
-    public String getTag() {
-        return tag;
-    }
-
-    void setTag(final String tag) {
-        this.tag = tag;
-    }
 
     // -----------------------------------------------------------------------------------------------------------------
-    final FullTextSegmentCodec<?> codec;
+    final int offset;
 
     final int length;
 
-    private int offset;
+    final FullTextSegmentCodec<?> codec;
 
-    private FullTextSegment previous;
-
-    private String tag;
+    String tag;
 }

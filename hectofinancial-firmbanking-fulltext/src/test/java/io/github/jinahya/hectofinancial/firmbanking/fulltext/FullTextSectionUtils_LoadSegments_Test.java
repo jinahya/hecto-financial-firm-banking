@@ -39,8 +39,6 @@ class FullTextSectionUtils_LoadSegments_Test {
         segments.forEach(s -> {
             log.debug("\tsegment: {}", s);
         });
-        assertThat(segments.stream().mapToInt(s -> s.length).sum())
-                .isEqualTo(category.headLength);
     }
 
     @MethodSource({

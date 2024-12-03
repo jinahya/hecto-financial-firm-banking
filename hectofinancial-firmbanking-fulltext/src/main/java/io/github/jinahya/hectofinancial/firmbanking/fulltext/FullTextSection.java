@@ -1,7 +1,9 @@
 package io.github.jinahya.hectofinancial.firmbanking.fulltext;
 
+import java.nio.ByteBuffer;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -12,9 +14,12 @@ import java.util.Objects;
 @SuppressWarnings({
         "java:S100" // Method names should comply with a naming convention
 })
-public abstract class FullTextSection {
+public class FullTextSection {
 
     // ------------------------------------------------------------------------------------------ STATIC_FACTORY_METHODS
+    // category -> textCode -> taskCode -> segments
+    private static final Map<FullTextCategory, List<FullTextSegment>> HEAD_SEGMENTS =
+            Collections.synchronizedMap(new EnumMap<>(FullTextCategory.class));
 
     /**
      * Returns a new instance of the {@code 공통부} for specified category.
@@ -23,11 +28,14 @@ public abstract class FullTextSection {
      * @return a new instance for the {@code 공통부} for {@code category}.
      */
     static FullTextSection newHeadInstance(final FullTextCategory category) {
-        return new FullTextSection(FullTextSectionUtils.loadHeadSegments(category)) {
+        Objects.requireNonNull(category, "category is null");
+        final var segments = HEAD_SEGMENTS.computeIfAbsent(category, FullTextSectionUtils::loadHeadSegments);
+        return new FullTextSection(segments) {
         };
     }
 
-    private static final Map<FullTextCategory, Map<String, Map<String, List<FullTextSegment>>>> MAP =
+    // category -> textCode -> taskCode -> segments
+    private static final Map<FullTextCategory, Map<String, Map<String, List<FullTextSegment>>>> BODY_SEGMENTS =
             Collections.synchronizedMap(new EnumMap<>(FullTextCategory.class));
 
     /**
@@ -38,17 +46,16 @@ public abstract class FullTextSection {
      * @param taskCode the {@code 업무구분코드}.
      * @return a new instance.
      */
-    static FullTextSection newInstance(final FullTextCategory category, final String textCode, final String taskCode) {
+    static FullTextSection newBodyInstance(final FullTextCategory category, final String textCode,
+                                           final String taskCode) {
         Objects.requireNonNull(category, "category is null");
         Objects.requireNonNull(textCode, "textCode is null");
         Objects.requireNonNull(taskCode, "taskCode is null");
-        final var segments = MAP.computeIfAbsent(category, tc -> new HashMap<>())
+        final var segments = BODY_SEGMENTS
+                .computeIfAbsent(category, tc -> Collections.synchronizedMap(new HashMap<>()))
                 .computeIfAbsent(textCode, tc -> Collections.synchronizedMap(new HashMap<>()))
-                .computeIfAbsent(taskCode, tc -> FullTextSectionUtils.loadBodySegments(
-                        category, textCode, tc
-                ));
-        return new FullTextSection(segments) {
-        };
+                .computeIfAbsent(taskCode, tc -> FullTextSectionUtils.loadBodySegments(category, textCode, tc));
+        return new FullTextSection(segments);
     }
 
     // ---------------------------------------------------------------------------------------------------- CONSTRUCTORS
@@ -58,6 +65,7 @@ public abstract class FullTextSection {
         length = this.segments.stream()
                 .mapToInt(s -> s.length)
                 .sum();
+        data = ByteBuffer.allocate(length);
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -65,7 +73,8 @@ public abstract class FullTextSection {
     public String toString() {
         return super.toString() + '{' +
                 "segments=" + segments +
-                ",length=" + length +
+                "length=" + length +
+                ",data=" + data +
                 '}';
     }
 
@@ -76,59 +85,40 @@ public abstract class FullTextSection {
         }
         final var that = (FullTextSection) obj;
         return length == that.length &&
-                Objects.equals(segments, that.segments);
+                Objects.equals(segments, that.segments) &&
+                Objects.equals(data, that.data);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(segments, length);
+        return Objects.hash(segments, length, data);
     }
 
     // -------------------------------------------------------------------------------------------------------- segments
-
-    @SuppressWarnings({
-            "unchecked",
-            "java:S1117" // Local variables should not shadow class fields
-    })
-    public <T> T getValue(final int index) {
+    private int requireValidIndex(final int index) {
         if (index <= 0) {
             throw new IllegalArgumentException("index(" + index + ") is not positive");
         }
         if (index > segments.size()) {
             throw new IllegalArgumentException("no segment at index(" + index + ")");
         }
-        final var segment = segments.get(index - 1);
-        final var offset = segment.getOffset();
-        final var length = segment.length;
-        final var encoded = new byte[length];
-        text.buffer.get(offset, encoded);
-        return ((FullTextSegmentCodec<T>) segment.codec).decode(encoded, length);
+        return index;
     }
 
-    @SuppressWarnings({
-            "java:S1117" // Local variables should not shadow class fields
-    })
+    public <T> T getValue(final int index) {
+        final var segment = segments.get(requireValidIndex(index) - 1);
+        return segment.getValue(data);
+    }
+
     public void setValue(final int index, final Object value) {
-        if (index <= 0) {
-            throw new IllegalArgumentException("index(" + index + ") is not positive");
-        }
-        if (index > segments.size()) {
-            throw new IllegalArgumentException("no segment at index(" + index + ")");
-        }
-        final var segment = segments.get(index - 1);
-        final var offset = segment.getOffset();
-        final var length = segment.length;
-        final var encoded = segment.codec.encode(value, length);
-        assert encoded.length == length;
-        text.buffer.put(offset, encoded);
+        final var segment = segments.get(requireValidIndex(index) - 1);
+        segment.setValue(data, value);
     }
 
     public FullTextSection value(final int index, final Object value) {
         setValue(index, value);
         return this;
     }
-
-    // ------------------------------------------------------------------------------------------------------------- int
 
     /**
      * Gets an {@code int} value, of the segment of specified index, from specified buffer.
@@ -151,7 +141,6 @@ public abstract class FullTextSection {
         return value(index, value);
     }
 
-    // ------------------------------------------------------------------------------------------------------------ date
     public LocalDate date_(final int index) {
         final var value = getValue(index);
         return LocalDate.parse(String.valueOf(value), FullTextSegmentCodecConstants.FORMATTER_DATE);
@@ -163,7 +152,6 @@ public abstract class FullTextSection {
         return this;
     }
 
-    // ------------------------------------------------------------------------------------------------------------ time
     public LocalTime time_(final int index) {
         final var value = getValue(index);
         return LocalTime.parse(String.valueOf(value), FullTextSegmentCodecConstants.FORMATTER_TIME);
@@ -176,19 +164,64 @@ public abstract class FullTextSection {
     }
 
     // ---------------------------------------------------------------------------------------------------------- length
-    final int getLength() {
+    public int getLength() {
         return length;
     }
 
-    // ------------------------------------------------------------------------------------------------------------ text
-    void setText(final FullText text) {
-        this.text = text;
+    // ------------------------------------------------------------------------------------------------------------ data
+    public FullTextSection resetData() {
+        Arrays.fill(data.array(), (byte) 0x20);
+        return this;
+    }
+
+    public String getDataString() {
+        return FullTextSegmentCodecX.CHARSET.decode(data.clear()).toString();
+    }
+
+    ByteBuffer getData(final ByteBuffer dst) {
+        if (Objects.requireNonNull(dst, "dst is null").remaining() < data.capacity()) {
+            throw new IllegalArgumentException(
+                    "dst.remaining(" + dst.remaining() + ") < data.capacity(" + data.capacity() + ")"
+            );
+        }
+        return dst.put(data.clear());
+    }
+
+    byte[] getData(final byte[] dst) {
+        if (Objects.requireNonNull(dst, "dst is null").length < data.capacity()) {
+            throw new IllegalArgumentException(
+                    "dst.length(" + dst.length + ") < data.capacity(" + data.capacity() + ")"
+            );
+        }
+        return getData(ByteBuffer.wrap(dst)).array();
+    }
+
+    byte[] getData() {
+        return getData(new byte[data.capacity()]);
+    }
+
+    void setData(final ByteBuffer src) {
+        if (Objects.requireNonNull(src, "src is null").remaining() > data.capacity()) {
+            throw new IllegalArgumentException(
+                    "src.remaining(" + src.remaining() + ") > data.capacity(" + data.capacity() + ")"
+            );
+        }
+        data.clear().put(src);
+    }
+
+    void setData(final byte[] src) {
+        if (Objects.requireNonNull(src, "src is null").length > data.capacity()) {
+            throw new IllegalArgumentException(
+                    "src.length(" + src.length + ") > data.capacity(" + data.capacity() + ")"
+            );
+        }
+        setData(ByteBuffer.wrap(src));
     }
 
     // -----------------------------------------------------------------------------------------------------------------
     final List<FullTextSegment> segments;
 
-    final int length;
+    private final int length;
 
-    private FullText text;
+    final ByteBuffer data;
 }
