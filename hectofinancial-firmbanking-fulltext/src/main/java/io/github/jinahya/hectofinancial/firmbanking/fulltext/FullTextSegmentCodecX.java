@@ -42,9 +42,9 @@ class FullTextSegmentCodecX
         if (length <= 0) {
             throw new IllegalArgumentException("length(" + length + ") is not positive");
         }
-        if (decoded instanceof String s) {
-            return encode(s, length);
-        }
+//        if (decoded instanceof String s) { // TODO: is this required?
+//            return encode(s, length);
+//        }
         return encode(decoded.toString(), length);
     }
 
