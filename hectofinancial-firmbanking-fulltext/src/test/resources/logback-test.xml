@@ -24,8 +24,8 @@
       <pattern>%d{HH:mm:ss.SSS} [%20thread] %highlight(%-5level) - %msg%n</pattern>
     </encoder>
   </appender>
-  <root level="info">
+  <root level="debug">
     <appender-ref ref="console"/>
   </root>
-  <logger name="com.github.jinahya.hello" level="debug"/>
+  <logger name="com.github.jinahya" level="debug"/>
 </configuration>
