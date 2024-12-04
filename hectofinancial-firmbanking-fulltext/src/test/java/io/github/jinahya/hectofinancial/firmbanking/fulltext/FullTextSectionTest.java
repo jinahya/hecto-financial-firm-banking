@@ -1,16 +1,6 @@
 package io.github.jinahya.hectofinancial.firmbanking.fulltext;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-
-import java.nio.ByteBuffer;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 class FullTextSectionTest {

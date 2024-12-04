@@ -10,7 +10,7 @@ import java.util.Objects;
 final class FullTextUtils {
 
     // -----------------------------------------------------------------------------------------------------------------
-    private static final int LENGTH_BYTES = 4;
+    static final int LENGTH_BYTES = 4;
 
     private static final FullTextSegmentCodec<Integer> LENGTH_CODEC = FullTextSegmentCodec.of9();
 
@@ -20,12 +20,12 @@ final class FullTextUtils {
         }
         Objects.requireNonNull(data, "data is null");
         // write length
-        for (var b = ByteBuffer.wrap(LENGTH_CODEC.encode(data.capacity(), LENGTH_BYTES)); b.hasRemaining(); ) {
+        for (var b = ByteBuffer.wrap(LENGTH_CODEC.encode(data.remaining(), LENGTH_BYTES)); b.hasRemaining(); ) {
             final var bytes = channel.write(b);
             assert bytes >= 0;
         }
         // write text
-        for (data.clear(); data.hasRemaining(); ) {
+        while (data.hasRemaining()) {
             final var bytes = channel.write(data);
             assert bytes >= 0;
         }

@@ -12,13 +12,21 @@ public enum FullTextCategory {
     D(FullTextConstants.SEGMENT_OFFSET_TEXT_CODE_D, FullTextConstants.SEGMENT_LENGTH_TEXT_CODE_D,
       FullTextConstants.SEGMENT_OFFSET_TASK_CODE_D, FullTextConstants.SEGMENT_LENGTH_TASK_CODE_D) { // @formatter:off
         @Override LocalDate getHeadDate(final FullTextSection headSection) {
-            return headSection.date_(FullTextConstants.SEGMENT_INDEX_HEAD_DATE_D);
+            try {
+                return headSection.getDate(FullTextConstants.SEGMENT_INDEX_HEAD_DATE_D);
+            } catch (final NumberFormatException nfe) {
+                return null;
+            }
         }
         @Override void setHeadDate(final FullTextSection headSection, final LocalDate headDate) {
             headSection.date_(FullTextConstants.SEGMENT_INDEX_HEAD_DATE_D, headDate);
         }
         @Override LocalTime getHeadTime(final FullTextSection headSection) {
-            return headSection.time_(FullTextConstants.SEGMENT_INDEX_HEAD_TIME_D);
+            try {
+                return headSection.getTime(FullTextConstants.SEGMENT_INDEX_HEAD_TIME_D);
+            } catch (final NumberFormatException nfe) {
+                return null;
+            }
         }
         @Override void setHeadTime(final FullTextSection headSection, final LocalTime headTime) {
             headSection.time_(FullTextConstants.SEGMENT_INDEX_HEAD_TIME_D, headTime);
@@ -31,13 +39,21 @@ public enum FullTextCategory {
     F(FullTextConstants.SEGMENT_OFFSET_TEXT_CODE_F, FullTextConstants.SEGMENT_LENGTH_TEXT_CODE_F,
       FullTextConstants.SEGMENT_OFFSET_TASK_CODE_F, FullTextConstants.SEGMENT_LENGTH_TASK_CODE_F) { // @formatter:off
         @Override LocalDate getHeadDate(final FullTextSection headSection) {
-            return headSection.date_(FullTextConstants.SEGMENT_INDEX_HEAD_DATE_F);
+            try {
+                return headSection.getDate(FullTextConstants.SEGMENT_INDEX_HEAD_DATE_F);
+            } catch (final NumberFormatException nfe) {
+                return null;
+            }
         }
         @Override void setHeadDate(final FullTextSection headSection, final LocalDate headDate) {
             headSection.date_(FullTextConstants.SEGMENT_INDEX_HEAD_DATE_F, headDate);
         }
         @Override LocalTime getHeadTime(final FullTextSection headSection) {
-            return headSection.time_(FullTextConstants.SEGMENT_INDEX_HEAD_TIME_F);
+            try {
+                return headSection.getTime(FullTextConstants.SEGMENT_INDEX_HEAD_TIME_F);
+            } catch (final NumberFormatException nfe) {
+                return null;
+            }
         }
         @Override void setHeadTime(final FullTextSection headSection, final LocalTime headTime) {
             headSection.time_(FullTextConstants.SEGMENT_INDEX_HEAD_TIME_F, headTime);
@@ -51,23 +67,24 @@ public enum FullTextCategory {
         headTaskCodeSegment = FullTextSegment.newInstanceOfX(headTaskCodeOffset, headTaskCodeLength, "headTaskCode");
     }
 
-    // -----------------------------------------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------------------------------------- headDate
 
     /**
      * Returns the value of {@code 전송일자} from specified head section.
      *
      * @param headSection the head section.
-     * @return the value of {@code 전송일자} from {@code headSection}.
+     * @return the value of {@code 전송일자} from {@code headSection}; {@code null} when failed to parse.
      */
     abstract LocalDate getHeadDate(final FullTextSection headSection);
 
     abstract void setHeadDate(final FullTextSection headSection, final LocalDate headDate);
 
+    // -------------------------------------------------------------------------------------------------------- headTime
     abstract LocalTime getHeadTime(final FullTextSection headSection);
 
     abstract void setHeadTime(final FullTextSection headSection, final LocalTime headTime);
 
-    // ------------------------------------------------------------------------------------------------- textCodeSegment
+    // --------------------------------------------------------------------------------------------- headTextCodeSegment
     String getHeadTextCode(final ByteBuffer data) {
         return headTextCodeSegment.getValue(data);
     }
@@ -76,7 +93,7 @@ public enum FullTextCategory {
         headTextCodeSegment.setValue(data, textCode);
     }
 
-    // ------------------------------------------------------------------------------------------------- taskCodeSegment
+    // --------------------------------------------------------------------------------------------- headTaskCodeSegment
     String getHeadTaskCode(final ByteBuffer data) {
         return headTaskCodeSegment.getValue(data);
     }
@@ -86,7 +103,14 @@ public enum FullTextCategory {
     }
 
     // -----------------------------------------------------------------------------------------------------------------
+
+    /**
+     * {@code 전문구분코드} segment.
+     */
     private final FullTextSegment headTextCodeSegment;
 
+    /**
+     * {@code 업무구분코드} segment.
+     */
     private final FullTextSegment headTaskCodeSegment;
 }

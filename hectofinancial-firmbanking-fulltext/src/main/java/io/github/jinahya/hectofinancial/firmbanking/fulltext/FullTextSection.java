@@ -30,8 +30,7 @@ public class FullTextSection {
     static FullTextSection newHeadInstance(final FullTextCategory category) {
         Objects.requireNonNull(category, "category is null");
         final var segments = HEAD_SEGMENTS.computeIfAbsent(category, FullTextSectionUtils::loadHeadSegments);
-        return new FullTextSection(segments) {
-        };
+        return new FullTextSection(segments).reset();
     }
 
     // category -> textCode -> taskCode -> segments
@@ -52,19 +51,17 @@ public class FullTextSection {
         Objects.requireNonNull(textCode, "textCode is null");
         Objects.requireNonNull(taskCode, "taskCode is null");
         final var segments = BODY_SEGMENTS
-                .computeIfAbsent(category, tc -> Collections.synchronizedMap(new HashMap<>()))
+                .computeIfAbsent(category, c -> Collections.synchronizedMap(new HashMap<>()))
                 .computeIfAbsent(textCode, tc -> Collections.synchronizedMap(new HashMap<>()))
                 .computeIfAbsent(taskCode, tc -> FullTextSectionUtils.loadBodySegments(category, textCode, tc));
-        return new FullTextSection(segments);
+        return new FullTextSection(segments).reset();
     }
 
     // ---------------------------------------------------------------------------------------------------- CONSTRUCTORS
     private FullTextSection(final List<FullTextSegment> segments) {
         super();
         this.segments = List.copyOf(segments);
-        length = this.segments.stream()
-                .mapToInt(s -> s.length)
-                .sum();
+        length = this.segments.stream().mapToInt(s -> s.length).sum();
         data = ByteBuffer.allocate(length);
     }
 
@@ -73,7 +70,7 @@ public class FullTextSection {
     public String toString() {
         return super.toString() + '{' +
                 "segments=" + segments +
-                "length=" + length +
+                ",length=" + length +
                 ",data=" + data +
                 '}';
     }
@@ -126,8 +123,18 @@ public class FullTextSection {
      * @param index the index of the segment.
      * @return the value of the segment of specified index in {@code int}.
      */
-    public int int__(final int index) {
+    public int getInt(final int index) {
         return this.<Integer>getValue(index);
+    }
+
+    /**
+     * Sets specified value of {@code int} to the segment of specified index.
+     *
+     * @param index the index of the segment.
+     * @param value new value for the segment.
+     */
+    public void setInt(final int index, final int value) {
+        setValue(index, value);
     }
 
     /**
@@ -138,28 +145,37 @@ public class FullTextSection {
      * @return this section.
      */
     public FullTextSection int__(final int index, final int value) {
-        return value(index, value);
+        setInt(index, value);
+        return this;
     }
 
-    public LocalDate date_(final int index) {
+    public LocalDate getDate(final int index) {
         final var value = getValue(index);
         return LocalDate.parse(String.valueOf(value), FullTextSegmentCodecConstants.FORMATTER_DATE);
     }
 
-    public FullTextSection date_(final int index, final LocalDate value) {
+    public void setDate(final int index, final LocalDate value) {
         Objects.requireNonNull(value, "value is null");
         setValue(index, FullTextSegmentCodecConstants.FORMATTER_DATE.format(value));
+    }
+
+    public FullTextSection date_(final int index, final LocalDate value) {
+        setDate(index, value);
         return this;
     }
 
-    public LocalTime time_(final int index) {
+    public LocalTime getTime(final int index) {
         final var value = getValue(index);
         return LocalTime.parse(String.valueOf(value), FullTextSegmentCodecConstants.FORMATTER_TIME);
     }
 
-    public FullTextSection time_(final int index, final LocalTime value) {
+    public void setTime(final int index, final LocalTime value) {
         Objects.requireNonNull(value, "value is null");
         setValue(index, FullTextSegmentCodecConstants.FORMATTER_TIME.format(value));
+    }
+
+    public FullTextSection time_(final int index, final LocalTime value) {
+        setTime(index, value);
         return this;
     }
 
@@ -191,7 +207,7 @@ public class FullTextSection {
      *
      * @return a string representation of this section.
      */
-    public String toEncodedString() {
+    public String getDataString() {
         return FullTextSegmentCodecX.CHARSET.decode(data.clear()).toString();
     }
 

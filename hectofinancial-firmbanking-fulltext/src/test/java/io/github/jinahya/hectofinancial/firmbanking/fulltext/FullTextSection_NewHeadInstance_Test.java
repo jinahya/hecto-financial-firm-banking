@@ -17,12 +17,16 @@ class FullTextSection_NewHeadInstance_Test {
     @EnumSource(FullTextCategory.class)
     @ParameterizedTest
     void __(final FullTextCategory category) {
-        final var head = FullTextSection.newHeadInstance(category);
-        assertThat(head.segments)
+        final var instance = FullTextSection.newHeadInstance(category);
+        instance.segments.forEach(s -> {
+            log.debug("segment: {}", s);
+        });
+        assertThat(instance.segments)
                 .isNotNull()
-                .isNotEmpty().
-                doesNotContainNull();
-        assertThat(head.segments).extracting(s -> s.offset)
+                .isNotEmpty()
+                .doesNotContainNull();
+        assertThat(instance.segments)
+                .extracting(s -> s.offset)
                 .doesNotHaveDuplicates()
                 .isSorted();
     }

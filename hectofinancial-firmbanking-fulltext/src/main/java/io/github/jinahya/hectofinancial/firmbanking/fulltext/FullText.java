@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.security.Key;
+import java.security.spec.AlgorithmParameterSpec;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -47,58 +49,58 @@ public class FullText {
         return instance;
     }
 
-    public static FullText newInstance(final FullTextCategory category, final ByteBuffer data) {
-        Objects.requireNonNull(category, "category is null");
-        Objects.requireNonNull(data, "data is null");
-        final var textCode = category.getHeadTextCode(data);
-        final var taskCode = category.getHeadTaskCode(data);
-        return newInstance(category, textCode, taskCode).setData(data);
-    }
+//    public static FullText newInstance(final FullTextCategory category, final ByteBuffer data) {
+//        Objects.requireNonNull(category, "category is null");
+//        Objects.requireNonNull(data, "data is null");
+//        final var textCode = category.getHeadTextCode(data);
+//        final var taskCode = category.getHeadTaskCode(data);
+//        return newInstance(category, textCode, taskCode).setData(data);
+//    }
+//
+//    /**
+//     * Reads an instance of specified category, from specified channel.
+//     *
+//     * @param category the category.
+//     * @param channel  the channel.
+//     * @return a new instance read from the {@code channel}.
+//     * @throws IOException if an I/O error occurs.
+//     * @see #readInstance(FullTextCategory, ReadableByteChannel, Cipher)
+//     */
+//    public static FullText readInstance(final FullTextCategory category, final ReadableByteChannel channel)
+//            throws IOException {
+//        Objects.requireNonNull(category, "category is null");
+//        final var data = FullTextUtils.readData(channel);
+//        return newInstance(category, data.flip());
+//    }
 
-    /**
-     * Reads an instance of specified category, from specified channel.
-     *
-     * @param category the category.
-     * @param channel  the channel.
-     * @return a new instance read from the {@code channel}.
-     * @throws IOException if an I/O error occurs.
-     * @see #readInstance(FullTextCategory, ReadableByteChannel, Cipher)
-     */
-    public static FullText readInstance(final FullTextCategory category, final ReadableByteChannel channel)
-            throws IOException {
-        Objects.requireNonNull(category, "category is null");
-        final var data = FullTextUtils.readData(channel);
-        return newInstance(category, data);
-    }
-
-    /**
-     * Reads an instance of specified category, from specified channel, while decrypting with specified cipher.
-     *
-     * @param category the category.
-     * @param channel  the channel.
-     * @param cipher   the cipher.
-     * @return a new instance read from {@code channel}.
-     * @throws IOException if an I/O error occurs.
-     * @see #readInstance(FullTextCategory, ReadableByteChannel)
-     */
-    public static FullText readInstance(final FullTextCategory category, final ReadableByteChannel channel,
-                                        final Cipher cipher)
-            throws IOException {
-        Objects.requireNonNull(category, "category is null");
-        if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
-            throw new IllegalArgumentException("channel is not open");
-        }
-        Objects.requireNonNull(cipher, "cipher is null");
-        final var encrypted = FullTextUtils.readData(channel);
-        final var decrypted = ByteBuffer.allocate(cipher.getOutputSize(encrypted.flip().remaining()));
-        try {
-            final var bytes = cipher.doFinal(encrypted, decrypted);
-            assert bytes <= decrypted.limit();
-        } catch (final Exception e) {
-            throw new RuntimeException("failed to decrypt with " + cipher, e);
-        }
-        return newInstance(category, decrypted.flip());
-    }
+//    /**
+//     * Reads an instance of specified category, from specified channel, while decrypting with specified cipher.
+//     *
+//     * @param category the category.
+//     * @param channel  the channel.
+//     * @param cipher   the cipher.
+//     * @return a new instance read from {@code channel}.
+//     * @throws IOException if an I/O error occurs.
+//     * @see #readInstance(FullTextCategory, ReadableByteChannel)
+//     */
+//    public static FullText readInstance(final FullTextCategory category, final ReadableByteChannel channel,
+//                                        final Cipher cipher)
+//            throws IOException {
+//        Objects.requireNonNull(category, "category is null");
+//        if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
+//            throw new IllegalArgumentException("channel is not open");
+//        }
+//        Objects.requireNonNull(cipher, "cipher is null");
+//        final var encrypted = FullTextUtils.readData(channel);
+//        final var decrypted = ByteBuffer.allocate(cipher.getOutputSize(encrypted.flip().remaining()));
+//        try {
+//            final var bytes = cipher.doFinal(encrypted, decrypted);
+//            assert bytes <= decrypted.limit();
+//        } catch (final Exception e) {
+//            throw new RuntimeException("failed to decrypt with " + cipher, e);
+//        }
+//        return newInstance(category, decrypted.flip());
+//    }
 
     // ---------------------------------------------------------------------------------------------------- CONSTRUCTORS
     private FullText(final FullTextCategory category, final List<? extends FullTextSection> sections) {
@@ -122,7 +124,31 @@ public class FullText {
 
     // -----------------------------------------------------------------------------------------------------------------
 
-    // -----------------------------------------------------------------------------------------------------------------
+    @Override
+    public String toString() {
+        return super.toString() + '{' +
+                "category=" + category +
+                ",sections=" + sections +
+                ",length=" + length +
+                '}';
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        final var that = (FullText) obj;
+        return length == that.length &&
+                category == that.category &&
+                Objects.equals(sections, that.sections);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(category, sections, length);
+    }
+// -----------------------------------------------------------------------------------------------------------------
 
     // -------------------------------------------------------------------------------------------------------- sections
 
@@ -131,7 +157,7 @@ public class FullText {
      * <p>
      * {@snippet lang = java:
      * var date = applySection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
-     *     return s.date_(8); // 8 전송일자
+     *     return s.getDate(8); // 8 전송일자
      * });
      *}
      *
@@ -179,6 +205,14 @@ public class FullText {
             consumer.accept(s);
             return null;
         });
+    }
+
+    public <R> R applyHeadSection(final Function<? super FullTextSection, ? extends R> function) {
+        return applySection(FullTextConstants.SECTION_INDEX_HEAD, function);
+    }
+
+    public void acceptHeadSection(final Consumer<? super FullTextSection> consumer) {
+        acceptSection(FullTextConstants.SECTION_INDEX_HEAD, consumer);
     }
 
     /**
@@ -273,43 +307,17 @@ public class FullText {
      */
     public String getDataString() {
         return sections.stream()
-                .map(FullTextSection::toEncodedString)
+                .map(FullTextSection::getDataString)
                 .collect(Collectors.joining());
     }
 
-    /**
-     * Puts internal data buffer to specified buffer.
-     *
-     * @param dst the buffer.
-     * @return given {@code dst}.
-     */
-    public ByteBuffer getData(final ByteBuffer dst) {
-        Objects.requireNonNull(dst, "dst is null");
+    public ByteBuffer getRawData() {
+        final var dst = ByteBuffer.allocate(length);
         sections.forEach(s -> s.getData(dst));
         return dst;
     }
 
-    /**
-     * Sets internal data buffer's data to specified array.
-     *
-     * @param dst the array.
-     * @return given {@code dst}.
-     */
-    public byte[] getData(final byte[] dst) {
-        Objects.requireNonNull(dst, "dst is null");
-        return getData(ByteBuffer.wrap(dst)).array();
-    }
-
-    /**
-     * Returns a copy of the internal data buffer's data.
-     *
-     * @return an array of internal data buffer's content.
-     */
-    public byte[] getData() {
-        return getData(new byte[length]);
-    }
-
-    FullText setData(final ByteBuffer src) {
+    public void setRawData(final ByteBuffer src) {
         if (Objects.requireNonNull(src, "src is null").remaining() != length) {
             throw new IllegalArgumentException("src.remaining(" + src.remaining() + ") != length(" + length + ")");
         }
@@ -317,15 +325,81 @@ public class FullText {
             src.limit(src.position() + section.getLength());
             section.setData(src);
         }
+    }
+
+    public FullText rawData(final ByteBuffer src) {
+        setRawData(src);
         return this;
     }
 
-    FullText setData(final byte[] src) {
-        if (Objects.requireNonNull(src, "src is null").length != length) {
-            throw new IllegalArgumentException("src.length(" + src.length + ") != length(" + length + ")");
+    private boolean initCipher(final int opmode) {
+        if (cipher != null && key != null) {
+            if (params != null) {
+                try {
+                    cipher.init(opmode, key, params);
+                } catch (final Exception e) {
+                    throw new RuntimeException("failed to initialize the cipher", e);
+                }
+            } else {
+                try {
+                    cipher.init(opmode, key);
+                } catch (final Exception e) {
+                    throw new RuntimeException("failed to initialize the cipher", e);
+                }
+            }
+            return true;
         }
-        return setData(ByteBuffer.wrap(src));
+        return false;
     }
+
+    /**
+     * Puts internal data buffer to specified buffer.
+     *
+     * @return given {@code dst}.
+     */
+    public ByteBuffer getData() {
+        final var data = getRawData();
+        if (initCipher(Cipher.ENCRYPT_MODE)) {
+            final var encrypted = ByteBuffer.allocate(cipher.getOutputSize(data.flip().remaining()));
+            try {
+                final var bytes = cipher.doFinal(data, encrypted);
+                assert bytes >= encrypted.capacity();
+            } catch (final Exception e) {
+                throw new RuntimeException("failed to encrypt", e);
+            }
+            return encrypted;
+        }
+        return data;
+    }
+
+    public void setData(final ByteBuffer src) {
+        if (Objects.requireNonNull(src, "src is null").remaining() < length) {
+            throw new IllegalArgumentException("src.remaining(" + src.remaining() + ") < length(" + length + ")");
+        }
+        if (initCipher(Cipher.DECRYPT_MODE)) {
+            final var decrypted = ByteBuffer.allocate(cipher.getOutputSize(src.remaining()));
+            try {
+                cipher.doFinal(src, decrypted);
+                setRawData(decrypted.flip());
+                return;
+            } catch (final Exception e) {
+                throw new RuntimeException("failed to decrypt", e);
+            }
+        }
+        setRawData(src);
+    }
+
+    public FullText data(final ByteBuffer src) {
+        setData(src);
+        return this;
+    }
+
+//    public FullText setData(final byte[] src) {
+//        if (Objects.requireNonNull(src, "src is null").length != length) {
+//            throw new IllegalArgumentException("src.length(" + src.length + ") != length(" + length + ")");
+//        }
+//        return setData(ByteBuffer.wrap(src));
+//    }
 
     /**
      * Returns the value of {@code 전문구분코드} of this full text.
@@ -375,60 +449,37 @@ public class FullText {
         if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
             throw new IllegalArgumentException("channel is not open");
         }
-        final var data = ByteBuffer.wrap(getData());
-        FullTextUtils.writeData(channel, data);
+        final var data = getData();
+        FullTextUtils.writeData(channel, data.flip());
     }
 
-    FullText read(final ReadableByteChannel channel) throws IOException {
+    public void read(final ReadableByteChannel channel) throws IOException {
         if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
             throw new IllegalArgumentException("channel is not open");
         }
         final var data = FullTextUtils.readData(channel);
-        return setData(data.flip());
-    }
-
-    /**
-     * Writes this full text to specified channel while encrypting bytes with specified cipher.
-     *
-     * @param channel the channel.
-     * @param cipher  the cipher.
-     * @throws IOException if an I/O error occurs.
-     */
-    public void write(final WritableByteChannel channel, final Cipher cipher) throws IOException {
-        if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
-            throw new IllegalArgumentException("channel is not open");
-        }
-        Objects.requireNonNull(cipher, "cipher is null");
-        final var input = ByteBuffer.wrap(getData());
-        assert input.position() == 0;
-        assert input.remaining() == length;
-        final var output = ByteBuffer.allocate(cipher.getOutputSize(input.remaining()));
-        try {
-            final var bytes = cipher.doFinal(input, output);
-            assert bytes <= output.limit();
-        } catch (final Exception e) {
-            throw new RuntimeException("failed to encrypt with " + cipher, e);
-        }
-        FullTextUtils.writeData(channel, output.flip());
-    }
-
-    FullText read(final ReadableByteChannel channel, final Cipher cipher) throws IOException {
-        if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
-            throw new IllegalArgumentException("channel is not open");
-        }
-        Objects.requireNonNull(cipher, "cipher is null");
-        final var input = FullTextUtils.readData(channel);
-        final var output = ByteBuffer.allocate(cipher.getOutputSize(input.flip().remaining()));
-        try {
-            final var bytes = cipher.doFinal(input, output);
-            assert bytes >= 0;
-        } catch (final Exception e) {
-            throw new RuntimeException("failed to decrypt", e);
-        }
-        return setData(output.flip());
+        setData(data.flip());
     }
 
     // ---------------------------------------------------------------------------------------------------------- length
+    public int getLength() {
+        return length;
+    }
+
+    // ---------------------------------------------------------------------------------------------------------- cipher
+    public void setCipher(final Cipher cipher) {
+        this.cipher = cipher;
+    }
+
+    // ------------------------------------------------------------------------------------------------------------- key
+    public void setKey(final Key key) {
+        this.key = key;
+    }
+
+    // ---------------------------------------------------------------------------------------------------------- params
+    public void setParams(final AlgorithmParameterSpec params) {
+        this.params = params;
+    }
 
     // -----------------------------------------------------------------------------------------------------------------
     private final FullTextCategory category;
@@ -436,4 +487,11 @@ public class FullText {
     final List<? extends FullTextSection> sections;
 
     private final int length;
+
+    // -----------------------------------------------------------------------------------------------------------------
+    private transient Cipher cipher;
+
+    private transient Key key;
+
+    private transient AlgorithmParameterSpec params;
 }

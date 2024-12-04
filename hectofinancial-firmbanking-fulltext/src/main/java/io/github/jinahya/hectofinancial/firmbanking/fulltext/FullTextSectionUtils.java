@@ -10,10 +10,12 @@ import java.util.Scanner;
 final class FullTextSectionUtils {
 
     private static List<FullTextSegment> loadSegments(final String name) {
-        Objects.requireNonNull(name, "name is null");
+        assert name != null && !name.isBlank();
         final var segments = new ArrayList<FullTextSegment>();
         try (final var resource = FullTextSectionUtils.class.getResourceAsStream(name)) {
-            Objects.requireNonNull(resource, "no resource loaded for '" + name + "'");
+            if (resource == null) {
+                throw new RuntimeException("no resource loaded for '" + name + "'");
+            }
             try (var s = new Scanner(resource, StandardCharsets.UTF_8)) {
                 for (int offset = 0; s.hasNext(); ) {
                     final var type = s.next();
@@ -36,26 +38,26 @@ final class FullTextSectionUtils {
     }
 
     // ------------------------------------------------------------------------------------------------------------ head
-    static String getHeadSegmentsResourceName(final FullTextCategory category) {
+    static String getResourceNameForHeadSegments(final FullTextCategory category) {
         return category.name() + ".head.segments";
     }
 
     static List<FullTextSegment> loadHeadSegments(final FullTextCategory category) {
         Objects.requireNonNull(category, "category is null");
-        final var name = getHeadSegmentsResourceName(category);
+        final var name = getResourceNameForHeadSegments(category);
         return loadSegments(name);
     }
 
     // ------------------------------------------------------------------------------------------------------------ body
-    static String getBodySegmentsResourceName(final FullTextCategory category, final String textCode,
-                                              final String taskCode) {
+    static String getResourceNameForBodySegments(final FullTextCategory category, final String textCode,
+                                                 final String taskCode) {
         return category.name() + textCode + "_" + taskCode + ".body.segments";
     }
 
     static List<FullTextSegment> loadBodySegments(final FullTextCategory category, final String textCode,
                                                   final String taskCode) {
         Objects.requireNonNull(category, "category is null");
-        final var name = getBodySegmentsResourceName(category, textCode, taskCode);
+        final var name = getResourceNameForBodySegments(category, textCode, taskCode);
         return loadSegments(name);
     }
 

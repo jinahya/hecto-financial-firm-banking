@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DisplayName("newBodyInstance(category)")
+@DisplayName("newBodyInstance(category, textCode, taskCode)")
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 @Slf4j
 class FullTextSection_NewBodyInstance_Test {
@@ -24,6 +24,8 @@ class FullTextSection_NewBodyInstance_Test {
                 Arguments.of(FullTextCategory.D, "1000", "500"),
                 Arguments.of(FullTextCategory.D, "2000", "100"),
                 Arguments.of(FullTextCategory.D, "2000", "200"),
+                Arguments.of(FullTextCategory.D, "2000", "550"),
+                Arguments.of(FullTextCategory.D, "2000", "650"),
                 Arguments.of(FullTextCategory.D, "7000", "100"),
                 Arguments.of(FullTextCategory.D, "7000", "200")
         );
@@ -32,12 +34,22 @@ class FullTextSection_NewBodyInstance_Test {
     @MethodSource({"getTextCategoryTextCodeAndTaskCodeArgumentsStream"})
     @ParameterizedTest
     void __(final FullTextCategory category, final String textCode, final String taskCode) {
-        final var body = FullTextSection.newBodyInstance(category, textCode, taskCode);
-        assertThat(body.segments)
+        final var instance = FullTextSection.newBodyInstance(category, textCode, taskCode);
+        assertThat(instance.segments)
                 .isNotNull()
                 .isNotEmpty()
-                .doesNotContainNull();
-        assertThat(body.segments).extracting(s -> s.offset)
+                .doesNotContainNull().allSatisfy(s -> {
+                    log.debug("segment: {}", s);
+                    assertThat(s.length)
+                            .as("length(%1$d) of %2$s", s.length, s)
+                            .isNotNegative();
+                    assertThat(s.offset)
+                            .as("offset(%1$d) of %2$s", s.offset, s)
+                            .isNotNegative();
+                });
+        assertThat(instance.segments)
+                .extracting(s -> s.offset)
+                .as("all offsets")
                 .doesNotHaveDuplicates()
                 .isSorted();
     }

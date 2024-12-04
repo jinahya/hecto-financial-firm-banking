@@ -3,12 +3,22 @@ package io.github.jinahya.hectofinancial.firmbanking.fulltext;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doAnswer;
@@ -19,6 +29,92 @@ import static org.mockito.Mockito.verify;
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 @Slf4j
 class FullTextTest {
+
+    static Stream<Arguments> getCategoryTextCodeAndTaskCodeArgumentsStream() {
+        return FullTextTestUtils.getCategoryTextCodeAndTaskCodeArgumentsStream();
+    }
+
+    @DisplayName("write(channel)")
+    @MethodSource({
+            "getCategoryTextCodeAndTaskCodeArgumentsStream"
+    })
+    @ParameterizedTest
+    void write__(final FullTextCategory category, final String textCode, final String taskCode) throws IOException {
+        // ------------------------------------------------------------------------------------------------------- given
+        final var instance = FullTextTestUtils.loadFullText(category, textCode, taskCode);
+        final var baos = new ByteArrayOutputStream();
+        // -------------------------------------------------------------------------------------------------------- when
+        instance.write(Channels.newChannel(baos));
+        // -------------------------------------------------------------------------------------------------------- then
+        final var bytes = baos.toByteArray();
+        assertThat(bytes).hasSize(instance.getLength() + FullTextUtils.LENGTH_BYTES);
+        instance.setData(ByteBuffer.wrap(Arrays.copyOfRange(bytes, FullTextUtils.LENGTH_BYTES, bytes.length)));
+        assertThat(instance.getTextCode()).isEqualTo(textCode);
+        assertThat(instance.getTaskCode()).isEqualTo(taskCode);
+    }
+
+    @DisplayName("write(channel)")
+    @MethodSource({
+            "getCategoryTextCodeAndTaskCodeArgumentsStream"
+    })
+    @ParameterizedTest
+    void write__Cipher(final FullTextCategory category, final String textCode, final String taskCode) {
+        // ------------------------------------------------------------------------------------------------------- given
+        final var instance = FullTextTestUtils.loadFullText(category, textCode, taskCode);
+        // -------------------------------------------------------------------------------------------------------- when
+        FullTextTestUtils.acceptCipherKeyAndParams(c -> k -> p -> {
+            instance.setCipher(c);
+            instance.setKey(k);
+            instance.setParams(p);
+            final var baos = new ByteArrayOutputStream();
+            try {
+                instance.write(Channels.newChannel(baos));
+                // -------------------------------------------------------------------------------------------------------- then
+                final var bytes = baos.toByteArray();
+                assertThat(bytes).hasSizeGreaterThanOrEqualTo(instance.getLength() + FullTextUtils.LENGTH_BYTES);
+                instance.setData(ByteBuffer.wrap(Arrays.copyOfRange(bytes, FullTextUtils.LENGTH_BYTES, bytes.length)));
+                assertThat(instance.getTextCode()).isEqualTo(textCode);
+                assertThat(instance.getTaskCode()).isEqualTo(taskCode);
+            } catch (final Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+//    @DisplayName("readInstance(channel, cipher)")
+//    @MethodSource({
+//            "getCategoryTextCodeAndTaskCodeArgumentsStream"
+//    })
+//    @ParameterizedTest
+//    void readInstance__ChannelAndCipher(final FullTextCategory category, final String textCode, final String taskCode) {
+//        // ------------------------------------------------------------------------------------------------------- given
+//        final var instance1 = FullTextTestUtils.loadFullText(category, textCode, taskCode);
+//        final var baos = new ByteArrayOutputStream();
+//        // -------------------------------------------------------------------------------------------------------- when
+//        FullTextTestUtils.acceptCipherKeyAndParams(c -> k -> p -> {
+//            try {
+//                c.init(Cipher.ENCRYPT_MODE, k, p);
+//                instance1.write(Channels.newChannel(baos), c);
+//            } catch (final Exception e) {
+//                throw new RuntimeException(e);
+//            }
+//            // ---------------------------------------------------------------------------------------------------- then
+//            final var bytes = baos.toByteArray();
+//            assertThat(bytes).hasSizeGreaterThanOrEqualTo(instance1.getLength() + FullTextUtils.LENGTH_BYTES);
+//            try {
+//                c.init(Cipher.DECRYPT_MODE, k, p);
+//            } catch (final Exception e) {
+//                throw new RuntimeException(e);
+//            }
+//            final FullText instance2;
+//            try {
+//                instance2 = FullText.readInstance(category, Channels.newChannel(new ByteArrayInputStream(bytes)), c);
+//            } catch (final IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//            assertThat(instance2).isNotNull().isEqualTo(instance1);
+//        });
+//    }
 
     @Test
     void getHeadDateTime__() {
