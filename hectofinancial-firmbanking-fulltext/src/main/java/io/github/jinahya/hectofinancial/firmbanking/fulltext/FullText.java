@@ -49,59 +49,6 @@ public class FullText {
         return instance;
     }
 
-//    public static FullText newInstance(final FullTextCategory category, final ByteBuffer data) {
-//        Objects.requireNonNull(category, "category is null");
-//        Objects.requireNonNull(data, "data is null");
-//        final var textCode = category.getHeadTextCode(data);
-//        final var taskCode = category.getHeadTaskCode(data);
-//        return newInstance(category, textCode, taskCode).setData(data);
-//    }
-//
-//    /**
-//     * Reads an instance of specified category, from specified channel.
-//     *
-//     * @param category the category.
-//     * @param channel  the channel.
-//     * @return a new instance read from the {@code channel}.
-//     * @throws IOException if an I/O error occurs.
-//     * @see #readInstance(FullTextCategory, ReadableByteChannel, Cipher)
-//     */
-//    public static FullText readInstance(final FullTextCategory category, final ReadableByteChannel channel)
-//            throws IOException {
-//        Objects.requireNonNull(category, "category is null");
-//        final var data = FullTextUtils.readData(channel);
-//        return newInstance(category, data.flip());
-//    }
-
-//    /**
-//     * Reads an instance of specified category, from specified channel, while decrypting with specified cipher.
-//     *
-//     * @param category the category.
-//     * @param channel  the channel.
-//     * @param cipher   the cipher.
-//     * @return a new instance read from {@code channel}.
-//     * @throws IOException if an I/O error occurs.
-//     * @see #readInstance(FullTextCategory, ReadableByteChannel)
-//     */
-//    public static FullText readInstance(final FullTextCategory category, final ReadableByteChannel channel,
-//                                        final Cipher cipher)
-//            throws IOException {
-//        Objects.requireNonNull(category, "category is null");
-//        if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
-//            throw new IllegalArgumentException("channel is not open");
-//        }
-//        Objects.requireNonNull(cipher, "cipher is null");
-//        final var encrypted = FullTextUtils.readData(channel);
-//        final var decrypted = ByteBuffer.allocate(cipher.getOutputSize(encrypted.flip().remaining()));
-//        try {
-//            final var bytes = cipher.doFinal(encrypted, decrypted);
-//            assert bytes <= decrypted.limit();
-//        } catch (final Exception e) {
-//            throw new RuntimeException("failed to decrypt with " + cipher, e);
-//        }
-//        return newInstance(category, decrypted.flip());
-//    }
-
     // ---------------------------------------------------------------------------------------------------- CONSTRUCTORS
     private FullText(final FullTextCategory category, final List<? extends FullTextSection> sections) {
         super();
@@ -148,7 +95,6 @@ public class FullText {
     public int hashCode() {
         return Objects.hash(category, sections, length);
     }
-// -----------------------------------------------------------------------------------------------------------------
 
     // -------------------------------------------------------------------------------------------------------- sections
 
@@ -213,6 +159,14 @@ public class FullText {
 
     public void acceptHeadSection(final Consumer<? super FullTextSection> consumer) {
         acceptSection(FullTextConstants.SECTION_INDEX_HEAD, consumer);
+    }
+
+    public <R> R applyBodySection(final Function<? super FullTextSection, ? extends R> function) {
+        return applySection(FullTextConstants.SECTION_INDEX_BODY, function);
+    }
+
+    public void acceptBodySection(final Consumer<? super FullTextSection> consumer) {
+        acceptSection(FullTextConstants.SECTION_INDEX_BODY, consumer);
     }
 
     /**
@@ -394,13 +348,6 @@ public class FullText {
         return this;
     }
 
-//    public FullText setData(final byte[] src) {
-//        if (Objects.requireNonNull(src, "src is null").length != length) {
-//            throw new IllegalArgumentException("src.length(" + src.length + ") != length(" + length + ")");
-//        }
-//        return setData(ByteBuffer.wrap(src));
-//    }
-
     /**
      * Returns the value of {@code 전문구분코드} of this full text.
      *
@@ -471,14 +418,29 @@ public class FullText {
         this.cipher = cipher;
     }
 
+    public FullText cipher(final Cipher cipher) {
+        setCipher(cipher);
+        return this;
+    }
+
     // ------------------------------------------------------------------------------------------------------------- key
     public void setKey(final Key key) {
         this.key = key;
     }
 
+    public FullText key(final Key key) {
+        setKey(key);
+        return null;
+    }
+
     // ---------------------------------------------------------------------------------------------------------- params
     public void setParams(final AlgorithmParameterSpec params) {
         this.params = params;
+    }
+
+    public FullText params(final AlgorithmParameterSpec params) {
+        setParams(params);
+        return this;
     }
 
     // -----------------------------------------------------------------------------------------------------------------
