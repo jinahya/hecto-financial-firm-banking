@@ -33,7 +33,7 @@ public class FullText {
      * @param category the category.
      * @param textCode the {@code 전문구분코드}.
      * @param taskCode the {@code 업무구분코드}.
-     * @return a new instance.
+     * @return a new instance of {@code category} with {@code textCode} and {@code taskCode}.
      */
     public static FullText newInstance(final FullTextCategory category, final String textCode, final String taskCode) {
         Objects.requireNonNull(category, "category is null");
@@ -43,10 +43,9 @@ public class FullText {
                 FullTextSection.newHeadInstance(category),
                 FullTextSection.newBodyInstance(category, textCode, taskCode)
         );
-        final var instance = new FullText(category, sections);
-        instance.setTextCode(textCode);
-        instance.setTaskCode(taskCode);
-        return instance;
+        return new FullText(category, sections)
+                .textCode(textCode)
+                .taskCode(taskCode);
     }
 
     // ---------------------------------------------------------------------------------------------------- CONSTRUCTORS
@@ -307,9 +306,10 @@ public class FullText {
     }
 
     /**
-     * Puts internal data buffer to specified buffer.
+     * Returns a byte buffer of data copied.
      *
-     * @return given {@code dst}.
+     * @return a byte buffer of data copied.
+     * @see #setData(ByteBuffer)
      */
     public ByteBuffer getData() {
         final var data = getRawData();
@@ -326,6 +326,13 @@ public class FullText {
         return data;
     }
 
+    /**
+     * Sets data with specified source buffer.
+     *
+     * @param src the source buffer.
+     * @see #getData()
+     * @see #data(ByteBuffer)
+     */
     public void setData(final ByteBuffer src) {
         if (Objects.requireNonNull(src, "src is null").remaining() < length) {
             throw new IllegalArgumentException("src.remaining(" + src.remaining() + ") < length(" + length + ")");
@@ -343,6 +350,13 @@ public class FullText {
         setRawData(src);
     }
 
+    /**
+     * Sets data with specified source buffer, and returns this text.
+     *
+     * @param src the source buffer.
+     * @return this text.
+     * @see #setData(ByteBuffer)
+     */
     public FullText data(final ByteBuffer src) {
         setData(src);
         return this;
@@ -351,7 +365,7 @@ public class FullText {
     /**
      * Returns the value of {@code 전문구분코드} of this full text.
      *
-     * @return the value of {@code 전문구분코드} of this full text.
+     * @return the value of {@code 전문구분코드}  this full text.
      */
     public String getTextCode() {
         return applySection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
@@ -359,11 +373,21 @@ public class FullText {
         });
     }
 
+    /**
+     * Sets the value of {@code 전문구분코드} of this full text with specified value.
+     *
+     * @param textCode new value for the {@code 전문구분코드}.
+     */
     FullText setTextCode(final String textCode) {
         Objects.requireNonNull(textCode, "textCode is null");
         acceptSection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
             category.setHeadTextCode(s.data, textCode);
         });
+        return this;
+    }
+
+    FullText textCode(final String textCode) {
+        setTextCode(textCode);
         return this;
     }
 
@@ -378,16 +402,25 @@ public class FullText {
         });
     }
 
-    FullText setTaskCode(final String taskCode) {
+    /**
+     * Sets the value of {@code 업무구분코드} of this full text with specified value.
+     *
+     * @param taskCode new value for the {@code 업무구분코드}.
+     */
+    void setTaskCode(final String taskCode) {
         Objects.requireNonNull(taskCode, "taskCode is null");
         acceptSection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
             category.setHeadTaskCode(s.data, taskCode);
         });
+    }
+
+    FullText taskCode(final String taskCode) {
+        setTaskCode(taskCode);
         return this;
     }
 
     /**
-     * Writes this full text to specified channel.
+     * Writes this text's data to specified channel.
      *
      * @param channel the channel.
      * @throws IOException if an I/O error occurs.
@@ -400,6 +433,12 @@ public class FullText {
         FullTextUtils.writeData(channel, data.flip());
     }
 
+    /**
+     * Reads this text's data from specified channel.
+     *
+     * @param channel the channel.
+     * @throws IOException if an I/O error occurs.
+     */
     public void read(final ReadableByteChannel channel) throws IOException {
         if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
             throw new IllegalArgumentException("channel is not open");
@@ -409,15 +448,33 @@ public class FullText {
     }
 
     // ---------------------------------------------------------------------------------------------------------- length
+
+    /**
+     * Returns the length of this text, in bytes.
+     *
+     * @return the length of this text, in bytes.
+     */
     public int getLength() {
         return length;
     }
 
     // ---------------------------------------------------------------------------------------------------------- cipher
+
+    /**
+     * Sets specified cipher to this text.
+     *
+     * @param cipher the cipher.
+     */
     public void setCipher(final Cipher cipher) {
         this.cipher = cipher;
     }
 
+    /**
+     * Sets specified cipher to this text, and returns this text.
+     *
+     * @param cipher the cipher.
+     * @return this text.
+     */
     public FullText cipher(final Cipher cipher) {
         setCipher(cipher);
         return this;

@@ -81,41 +81,6 @@ class FullTextTest {
         });
     }
 
-//    @DisplayName("readInstance(channel, cipher)")
-//    @MethodSource({
-//            "getCategoryTextCodeAndTaskCodeArgumentsStream"
-//    })
-//    @ParameterizedTest
-//    void readInstance__ChannelAndCipher(final FullTextCategory category, final String textCode, final String taskCode) {
-//        // ------------------------------------------------------------------------------------------------------- given
-//        final var instance1 = FullTextTestUtils.loadFullText(category, textCode, taskCode);
-//        final var baos = new ByteArrayOutputStream();
-//        // -------------------------------------------------------------------------------------------------------- when
-//        FullTextTestUtils.acceptCipherKeyAndParams(c -> k -> p -> {
-//            try {
-//                c.init(Cipher.ENCRYPT_MODE, k, p);
-//                instance1.write(Channels.newChannel(baos), c);
-//            } catch (final Exception e) {
-//                throw new RuntimeException(e);
-//            }
-//            // ---------------------------------------------------------------------------------------------------- then
-//            final var bytes = baos.toByteArray();
-//            assertThat(bytes).hasSizeGreaterThanOrEqualTo(instance1.getLength() + FullTextUtils.LENGTH_BYTES);
-//            try {
-//                c.init(Cipher.DECRYPT_MODE, k, p);
-//            } catch (final Exception e) {
-//                throw new RuntimeException(e);
-//            }
-//            final FullText instance2;
-//            try {
-//                instance2 = FullText.readInstance(category, Channels.newChannel(new ByteArrayInputStream(bytes)), c);
-//            } catch (final IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//            assertThat(instance2).isNotNull().isEqualTo(instance1);
-//        });
-//    }
-
     @Test
     void getHeadDateTime__() {
         // ------------------------------------------------------------------------------------------------------- given
