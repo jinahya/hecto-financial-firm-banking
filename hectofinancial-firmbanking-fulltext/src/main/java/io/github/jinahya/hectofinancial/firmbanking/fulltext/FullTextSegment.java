@@ -71,18 +71,33 @@ class FullTextSegment {
         data.put(offset, src);
     }
 
-    // ----------------------------------------------------------------------------------------------------------- range
+    // ---------------------------------------------------------------------------------------------------------- offset
+    int getOffset() {
+        return offset;
+    }
+
+    // ---------------------------------------------------------------------------------------------------------- length
+    int getLength() {
+        return length;
+    }
 
     // ----------------------------------------------------------------------------------------------------------- codec
 
+    FullTextSegmentCodec<?> getCodec() {
+        return codec;
+    }
+
     // ------------------------------------------------------------------------------------------------------------- tag
+    String getTag() {
+        return tag;
+    }
 
     // -----------------------------------------------------------------------------------------------------------------
-    final int offset;
+    private final int offset;
 
-    final int length;
+    private final int length;
 
-    final FullTextSegmentCodec<?> codec;
+    private final FullTextSegmentCodec<?> codec;
 
-    final String tag;
+    private final String tag;
 }

@@ -69,7 +69,7 @@ class FullTextTest {
             final var baos = new ByteArrayOutputStream();
             try {
                 instance.write(Channels.newChannel(baos));
-                // -------------------------------------------------------------------------------------------------------- then
+                // ------------------------------------------------------------------------------------------------ then
                 final var bytes = baos.toByteArray();
                 assertThat(bytes).hasSizeGreaterThanOrEqualTo(instance.getLength() + FullTextUtils.LENGTH_BYTES);
                 instance.setData(ByteBuffer.wrap(Arrays.copyOfRange(bytes, FullTextUtils.LENGTH_BYTES, bytes.length)));

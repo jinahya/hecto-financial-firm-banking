@@ -52,7 +52,7 @@ class FullTextSectionUtils_LoadSegments_Test {
         segments.forEach(s -> {
             log.debug("\tsegment: {}", s);
         });
-        assertThat(segments.stream().mapToInt(s -> s.length).sum())
+        assertThat(segments.stream().mapToInt(FullTextSegment::getLength).sum())
                 .as("sum of all lengths")
                 .isEqualTo(bodyLength);
     }

@@ -54,14 +54,14 @@ class FullTextCategoryTest {
     @ParameterizedTest
     void getTextCode__(final FullTextCategory category) {
         final var headSection = FullTextSection.newHeadInstance(category);
-        assertThat(category.getHeadTextCode(headSection.data)).isBlank();
+        assertThat(category.getHeadTextCode(headSection.getBuffer())).isBlank();
     }
 
     @EnumSource(FullTextCategory.class)
     @ParameterizedTest
     void setTextCode__(final FullTextCategory category) {
         final var headSection = FullTextSection.newHeadInstance(category);
-        category.setHeadTextCode(headSection.data, "0000");
+        category.setHeadTextCode(headSection.getBuffer(), "0000");
     }
 
     // ---------------------------------------------------------------------------------------------------- headTaskCode
@@ -69,13 +69,13 @@ class FullTextCategoryTest {
     @ParameterizedTest
     void getTaskCode__(final FullTextCategory category) {
         final var headSection = FullTextSection.newHeadInstance(category);
-        assertThat(category.getHeadTaskCode(headSection.data)).isBlank();
+        assertThat(category.getHeadTaskCode(headSection.getBuffer())).isBlank();
     }
 
     @EnumSource(FullTextCategory.class)
     @ParameterizedTest
     void setTaskCode__(final FullTextCategory category) {
         final var headSection = FullTextSection.newHeadInstance(category);
-        category.setHeadTaskCode(headSection.data, "000");
+        category.setHeadTaskCode(headSection.getBuffer(), "000");
     }
 }

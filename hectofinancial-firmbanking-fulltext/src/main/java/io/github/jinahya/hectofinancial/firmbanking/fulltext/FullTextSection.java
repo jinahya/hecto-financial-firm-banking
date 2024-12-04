@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 @SuppressWarnings({
         "java:S100" // Method names should comply with a naming convention
@@ -61,8 +63,8 @@ public class FullTextSection {
     private FullTextSection(final List<FullTextSegment> segments) {
         super();
         this.segments = List.copyOf(segments);
-        length = this.segments.stream().mapToInt(s -> s.length).sum();
-        data = ByteBuffer.allocate(length);
+        length = this.segments.stream().mapToInt(FullTextSegment::getLength).sum();
+        buffer = ByteBuffer.allocate(length);
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -71,7 +73,7 @@ public class FullTextSection {
         return super.toString() + '{' +
                 "segments=" + segments +
                 ",length=" + length +
-                ",data=" + data +
+                ",data=" + buffer +
                 '}';
     }
 
@@ -83,15 +85,19 @@ public class FullTextSection {
         final var that = (FullTextSection) obj;
         return length == that.length &&
                 Objects.equals(segments, that.segments) &&
-                Objects.equals(data, that.data);
+                Objects.equals(buffer, that.buffer);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(segments, length, data);
+        return Objects.hash(segments, length, buffer);
     }
 
     // -------------------------------------------------------------------------------------------------------- segments
+    List<FullTextSegment> getSegments() {
+        return segments;
+    }
+
     private int requireValidIndex(final int index) {
         if (index <= 0) {
             throw new IllegalArgumentException("index(" + index + ") is not positive");
@@ -104,12 +110,12 @@ public class FullTextSection {
 
     public <T> T getValue(final int index) {
         final var segment = segments.get(requireValidIndex(index) - 1);
-        return segment.getValue(data);
+        return segment.getValue(buffer);
     }
 
     public void setValue(final int index, final Object value) {
         final var segment = segments.get(requireValidIndex(index) - 1);
-        segment.setValue(data, value);
+        segment.setValue(buffer, value);
     }
 
     public FullTextSection value(final int index, final Object value) {
@@ -190,7 +196,10 @@ public class FullTextSection {
         return length;
     }
 
-    // ------------------------------------------------------------------------------------------------------------ data
+    // ---------------------------------------------------------------------------------------------------------- buffer
+    ByteBuffer getBuffer() {
+        return buffer;
+    }
 
     /**
      * Resets this section by setting data with zeros.
@@ -198,7 +207,7 @@ public class FullTextSection {
      * @return this section.
      */
     public FullTextSection reset() {
-        Arrays.fill(data.array(), (byte) 0x20);
+        Arrays.fill(buffer.array(), (byte) 0x20);
         return this;
     }
 
@@ -208,53 +217,78 @@ public class FullTextSection {
      * @return a string representation of this section.
      */
     public String getDataString() {
-        return FullTextSegmentCodecX.CHARSET.decode(data.clear()).toString();
+        return FullTextSegmentCodecX.CHARSET.decode(buffer.clear()).toString();
     }
 
     ByteBuffer getData(final ByteBuffer dst) {
-        if (Objects.requireNonNull(dst, "dst is null").remaining() < data.capacity()) {
+        if (Objects.requireNonNull(dst, "dst is null").remaining() < buffer.capacity()) {
             throw new IllegalArgumentException(
-                    "dst.remaining(" + dst.remaining() + ") < data.capacity(" + data.capacity() + ")"
+                    "dst.remaining(" + dst.remaining() + ") < data.capacity(" + buffer.capacity() + ")"
             );
         }
-        return dst.put(data.clear());
+        return dst.put(buffer.clear());
     }
 
     byte[] getData(final byte[] dst) {
-        if (Objects.requireNonNull(dst, "dst is null").length < data.capacity()) {
+        if (Objects.requireNonNull(dst, "dst is null").length < buffer.capacity()) {
             throw new IllegalArgumentException(
-                    "dst.length(" + dst.length + ") < data.capacity(" + data.capacity() + ")"
+                    "dst.length(" + dst.length + ") < data.capacity(" + buffer.capacity() + ")"
             );
         }
         return getData(ByteBuffer.wrap(dst)).array();
     }
 
     byte[] getData() {
-        return getData(new byte[data.capacity()]);
+        return getData(new byte[buffer.capacity()]);
     }
 
     void setData(final ByteBuffer src) {
-        if (Objects.requireNonNull(src, "src is null").remaining() > data.capacity()) {
+        if (Objects.requireNonNull(src, "src is null").remaining() > buffer.capacity()) {
             throw new IllegalArgumentException(
-                    "src.remaining(" + src.remaining() + ") > data.capacity(" + data.capacity() + ")"
+                    "src.remaining(" + src.remaining() + ") > data.capacity(" + buffer.capacity() + ")"
             );
         }
-        data.clear().put(src);
+        buffer.clear().put(src);
     }
 
     void setData(final byte[] src) {
-        if (Objects.requireNonNull(src, "src is null").length > data.capacity()) {
+        if (Objects.requireNonNull(src, "src is null").length > buffer.capacity()) {
             throw new IllegalArgumentException(
-                    "src.length(" + src.length + ") > data.capacity(" + data.capacity() + ")"
+                    "src.length(" + src.length + ") > data.capacity(" + buffer.capacity() + ")"
             );
         }
         setData(ByteBuffer.wrap(src));
     }
 
+    /**
+     * Applies this section's data to specified function, and returns the result.
+     *
+     * @param function the function.
+     * @param <R>      result type parameter
+     * @return the result of the {@code function}.
+     */
+    public <R> R applyData(final Function<? super ByteBuffer, ? extends R> function) {
+        Objects.requireNonNull(function, "function is null");
+        return function.apply(buffer);
+    }
+
+    /**
+     * Accepts this section's data to specified consumer.
+     *
+     * @param consumer the consumer.
+     */
+    public void acceptData(final Consumer<? super ByteBuffer> consumer) {
+        Objects.requireNonNull(consumer, "consumer is null");
+        applyData(d -> {
+            consumer.accept(d);
+            return null;
+        });
+    }
+
     // -----------------------------------------------------------------------------------------------------------------
-    final List<FullTextSegment> segments;
+    private final List<FullTextSegment> segments;
 
     private final int length;
 
-    final ByteBuffer data;
+    private final ByteBuffer buffer;
 }

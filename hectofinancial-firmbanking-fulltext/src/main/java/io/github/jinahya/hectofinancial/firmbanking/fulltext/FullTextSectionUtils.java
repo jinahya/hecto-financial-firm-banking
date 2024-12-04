@@ -28,7 +28,7 @@ final class FullTextSectionUtils {
                         segment = FullTextSegment.newInstanceOf9(offset, length, tag);
                     }
                     segments.add(segment);
-                    offset += segment.length;
+                    offset += segment.getLength();
                 }
             }
         } catch (final IOException ioe) {

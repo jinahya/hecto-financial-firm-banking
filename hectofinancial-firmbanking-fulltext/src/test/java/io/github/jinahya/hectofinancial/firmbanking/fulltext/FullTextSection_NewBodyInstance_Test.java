@@ -35,20 +35,20 @@ class FullTextSection_NewBodyInstance_Test {
     @ParameterizedTest
     void __(final FullTextCategory category, final String textCode, final String taskCode) {
         final var instance = FullTextSection.newBodyInstance(category, textCode, taskCode);
-        assertThat(instance.segments)
+        assertThat(instance.getSegments())
                 .isNotNull()
                 .isNotEmpty()
                 .doesNotContainNull().allSatisfy(s -> {
                     log.debug("segment: {}", s);
-                    assertThat(s.length)
-                            .as("length(%1$d) of %2$s", s.length, s)
+                    assertThat(s.getLength())
+                            .as("length(%1$d) of %2$s", s.getLength(), s)
                             .isNotNegative();
-                    assertThat(s.offset)
-                            .as("offset(%1$d) of %2$s", s.offset, s)
+                    assertThat(s.getOffset())
+                            .as("offset(%1$d) of %2$s", s.getOffset(), s)
                             .isNotNegative();
                 });
-        assertThat(instance.segments)
-                .extracting(s -> s.offset)
+        assertThat(instance.getSegments())
+                .extracting(FullTextSegment::getOffset)
                 .as("all offsets")
                 .doesNotHaveDuplicates()
                 .isSorted();

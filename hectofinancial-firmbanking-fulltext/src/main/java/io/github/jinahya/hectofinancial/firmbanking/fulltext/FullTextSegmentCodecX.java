@@ -24,7 +24,7 @@ class FullTextSegmentCodecX
         assert length > 0;
         final var encoded = new byte[length];
         {
-            final var bytes = decoded.getBytes(CHARSET);
+            final var bytes = decoded.stripTrailing().getBytes(CHARSET);
             if (bytes.length > encoded.length) {
                 throw new IllegalArgumentException(
                         "decoded.bytes.length(" + bytes.length + ") > encoded.length(" + encoded.length + ")"

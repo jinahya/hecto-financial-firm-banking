@@ -369,7 +369,7 @@ public class FullText {
      */
     public String getTextCode() {
         return applySection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
-            return category.getHeadTextCode(s.data);
+            return category.getHeadTextCode(s.getBuffer());
         });
     }
 
@@ -381,7 +381,7 @@ public class FullText {
     FullText setTextCode(final String textCode) {
         Objects.requireNonNull(textCode, "textCode is null");
         acceptSection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
-            category.setHeadTextCode(s.data, textCode);
+            category.setHeadTextCode(s.getBuffer(), textCode);
         });
         return this;
     }
@@ -398,7 +398,7 @@ public class FullText {
      */
     public String getTaskCode() {
         return applySection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
-            return category.getHeadTaskCode(s.data);
+            return category.getHeadTaskCode(s.getBuffer());
         });
     }
 
@@ -410,7 +410,7 @@ public class FullText {
     void setTaskCode(final String taskCode) {
         Objects.requireNonNull(taskCode, "taskCode is null");
         acceptSection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
-            category.setHeadTaskCode(s.data, taskCode);
+            category.setHeadTaskCode(s.getBuffer(), taskCode);
         });
     }
 

@@ -18,15 +18,15 @@ class FullTextSection_NewHeadInstance_Test {
     @ParameterizedTest
     void __(final FullTextCategory category) {
         final var instance = FullTextSection.newHeadInstance(category);
-        instance.segments.forEach(s -> {
+        instance.getSegments().forEach(s -> {
             log.debug("segment: {}", s);
         });
-        assertThat(instance.segments)
+        assertThat(instance.getSegments())
                 .isNotNull()
                 .isNotEmpty()
                 .doesNotContainNull();
-        assertThat(instance.segments)
-                .extracting(s -> s.offset)
+        assertThat(instance.getSegments())
+                .extracting(FullTextSegment::getOffset)
                 .doesNotHaveDuplicates()
                 .isSorted();
     }
