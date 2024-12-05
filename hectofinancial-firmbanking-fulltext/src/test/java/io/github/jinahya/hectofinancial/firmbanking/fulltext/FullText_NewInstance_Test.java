@@ -8,7 +8,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.IOException;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,8 +29,7 @@ class FullText_NewInstance_Test {
             "getTextCategoryTextCodeAndTaskCodeArgumentsStream"
     })
     @ParameterizedTest
-    void __(final FullTextCategory category, final String textCode, final String taskCode)
-            throws IOException {
+    void __(final FullTextCategory category, final String textCode, final String taskCode) {
         final var text = FullText.newInstance(category, textCode, taskCode);
         assertThat(text).isNotNull().satisfies(t -> {
             assertThat(t.sections)
