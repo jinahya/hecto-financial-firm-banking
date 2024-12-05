@@ -28,7 +28,7 @@ class FullText_NewInstance_Test {
     void __(final FullTextCategory category, final String textCode, final String taskCode) {
         final var text = FullText.newInstance(category, textCode, taskCode);
         assertThat(text).isNotNull().satisfies(t -> {
-            assertThat(t.sections)
+            assertThat(t.getSections())
                     .isNotNull()
                     .doesNotContainNull()
                     .hasSizeGreaterThanOrEqualTo(2)

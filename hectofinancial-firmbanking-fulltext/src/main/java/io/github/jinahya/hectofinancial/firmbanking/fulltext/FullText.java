@@ -42,7 +42,7 @@ public class FullText {
                 FullTextSection.newHeadInstance(category),
                 FullTextSection.newBodyInstance(category, textCode, taskCode)
         );
-        final var instance = new FullText(category, textCode, taskCode, sections);
+        final var instance = new FullText(category, sections);
         instance.setTextCode(textCode);
         instance.setTaskCode(taskCode);
         return instance;
@@ -75,12 +75,9 @@ public class FullText {
     }
 
     // ---------------------------------------------------------------------------------------------------- CONSTRUCTORS
-    private FullText(final FullTextCategory category, final String textCode, final String taskCode,
-                     final List<? extends FullTextSection> sections) {
+    private FullText(final FullTextCategory category, final List<? extends FullTextSection> sections) {
         super();
         this.category = Objects.requireNonNull(category, "category is null");
-        this.textCode = Objects.requireNonNull(textCode, "textCode is null");
-        this.taskCode = Objects.requireNonNull(taskCode, "taskCode is null");
         if (Objects.requireNonNull(sections, "sections is null").isEmpty()) {
             throw new IllegalArgumentException("empty sections");
         }
@@ -92,8 +89,6 @@ public class FullText {
     FullText() {
         super();
         category = null;
-        textCode = null;
-        taskCode = null;
         sections = null;
         length = 0;
     }
@@ -109,8 +104,6 @@ public class FullText {
     public String toString() {
         return super.toString() + '{' +
                 "category=" + category +
-                ",textCode=" + textCode +
-                ",taskCode=" + taskCode +
                 ",sections=" + sections +
                 ",length=" + length +
                 '}';
@@ -143,8 +136,6 @@ public class FullText {
         return category;
     }
 
-    // -------------------------------------------------------------------------------------------------------- textCode
-
     /**
      * Returns the {@code 전문구분코드} of this text.
      *
@@ -152,14 +143,11 @@ public class FullText {
      */
     public String getTextCode() {
         return applyHeadSection(s -> category.getHeadTextCode(s.getBuffer()));
-//        return textCode;
     }
 
     void setTextCode(final String textCode) {
         acceptHeadSection(s -> category.setHeadTextCode(s.getBuffer(), textCode));
     }
-
-    // -------------------------------------------------------------------------------------------------------- taskCode
 
     /**
      * Returns the {@code 업무구분코드} of this text.
@@ -168,7 +156,6 @@ public class FullText {
      */
     public String getTaskCode() {
         return applyHeadSection(s -> category.getHeadTaskCode(s.getBuffer()));
-//        return taskCode;
     }
 
     void setTaskCode(final String taskCode) {
@@ -176,6 +163,9 @@ public class FullText {
     }
 
     // -------------------------------------------------------------------------------------------------------- sections
+    List<? extends FullTextSection> getSections() {
+        return sections;
+    }
 
     /**
      * Applies the section of specified index to specified function, and return the result.
@@ -460,11 +450,7 @@ public class FullText {
     // -----------------------------------------------------------------------------------------------------------------
     private final FullTextCategory category;
 
-    private final String textCode;
-
-    private final String taskCode;
-
-    final List<? extends FullTextSection> sections;
+    private final List<? extends FullTextSection> sections;
 
     private final int length;
 
