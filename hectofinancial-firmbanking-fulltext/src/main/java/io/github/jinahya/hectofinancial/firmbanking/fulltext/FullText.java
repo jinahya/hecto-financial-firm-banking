@@ -69,7 +69,7 @@ public class FullText {
         final var textCode = category.getHeadTextCode(data);
         final var taskCode = category.getHeadTaskCode(data);
         final var instance = newInstance(category, textCode, taskCode);
-        instance.setData(data.flip()); // set data without the security
+        instance.setData(data.flip()); // set data before setting the security
         instance.setSecurity(security); // should be set after the data.
         return instance;
     }
