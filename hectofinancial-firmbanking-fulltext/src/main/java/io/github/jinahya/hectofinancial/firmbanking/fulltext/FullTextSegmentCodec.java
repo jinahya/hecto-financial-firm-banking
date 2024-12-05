@@ -26,8 +26,7 @@ abstract class FullTextSegmentCodec<V> {
      * Decodes specified value for specified length of the source segment.
      *
      * @param encoded the value to decode.
-     * @param length  the length of the source segment.
      * @return decoded value of {@code encoded}.
      */
-    abstract V decode(byte[] encoded, int length);
+    abstract V decode(byte[] encoded);
 }

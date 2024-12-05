@@ -44,7 +44,7 @@ final class FullTextUtils {
                     throw new EOFException("unexpected end-of-file while reading length bytes");
                 }
             }
-            length = LENGTH_CODEC.decode(a, a.length);
+            length = LENGTH_CODEC.decode(a);
         }
         // read text
         final var b = ByteBuffer.allocate(length);

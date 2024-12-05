@@ -54,14 +54,8 @@ class FullTextSegmentCodec9
     }
 
     @Override
-    Integer decode(final byte[] encoded, final int length) {
+    Integer decode(final byte[] encoded) {
         Objects.requireNonNull(encoded, "encoded is null");
-        if (length <= 0) {
-            throw new IllegalArgumentException("length(" + length + ") is not positive");
-        }
-        if (encoded.length > length) {
-            throw new IllegalArgumentException("encoded.length(" + encoded.length + ") > length(" + length + ")");
-        }
         final var string = new String(encoded, CHARSET).strip();
         if (string.isBlank()) {
             return null;

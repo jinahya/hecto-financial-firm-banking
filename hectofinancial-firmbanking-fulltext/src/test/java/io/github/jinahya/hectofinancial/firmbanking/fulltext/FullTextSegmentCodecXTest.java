@@ -25,7 +25,7 @@ class FullTextSegmentCodecXTest
     @Test
     void decode__110() {
         final var encoded = "1         ".getBytes();
-        final var decoded = newCodecInstance().decode(encoded, 10);
+        final var decoded = newCodecInstance().decode(encoded);
         log.debug("decoded: {}", decoded);
         assertThat(decoded).isEqualTo("1");
     }
@@ -41,7 +41,7 @@ class FullTextSegmentCodecXTest
     @Test
     void decode__홍길동10() {
         final var encoded = "1         ".getBytes();
-        final var decoded = newCodecInstance().decode(encoded, 10);
+        final var decoded = newCodecInstance().decode(encoded);
         log.debug("decoded: {}", decoded);
         assertThat(decoded).isEqualTo("1");
     }
@@ -54,7 +54,7 @@ class FullTextSegmentCodecXTest
         final byte[] encoded = newCodecInstance().encode(decoded, length);
         log.debug("encoded: {}", encoded);
         assertThat(encoded).isEqualTo(decoded.getBytes(FullTextSegmentCodecX.CHARSET));
-        assertThat(newCodecInstance().decode(encoded, length)).isEqualTo(decoded);
+        assertThat(newCodecInstance().decode(encoded)).isEqualTo(decoded);
     }
 
     @DisplayName("공통부/3/은행코드/9(3)")
@@ -64,7 +64,7 @@ class FullTextSegmentCodecXTest
         final int length = 3;
         final byte[] encoded = newCodecInstance().encode(decoded, length);
         log.debug("decoded: {}, encoded: {}", decoded, encoded);
-        assertThat(newCodecInstance().decode(encoded, length)).isEqualTo(decoded);
+        assertThat(newCodecInstance().decode(encoded)).isEqualTo(decoded);
     }
 
     @DisplayName("공통부/4/전문구분코드/X(3)")
@@ -75,7 +75,7 @@ class FullTextSegmentCodecXTest
         final byte[] encoded = newCodecInstance().encode(decoded, length);
         log.debug("encoded: {}", encoded);
         assertThat(encoded).isEqualTo(decoded.getBytes(FullTextSegmentCodecX.CHARSET));
-        assertThat(newCodecInstance().decode(encoded, length)).isEqualTo(decoded);
+        assertThat(newCodecInstance().decode(encoded)).isEqualTo(decoded);
     }
 
     @DisplayName("공통부/5/업무구분코드/X(3)")
@@ -86,7 +86,7 @@ class FullTextSegmentCodecXTest
         final byte[] encoded = newCodecInstance().encode(decoded, length);
         log.debug("encoded: {}", encoded);
         assertThat(encoded).isEqualTo(decoded.getBytes(FullTextSegmentCodecX.CHARSET));
-        assertThat(newCodecInstance().decode(encoded, length)).isEqualTo(decoded);
+        assertThat(newCodecInstance().decode(encoded)).isEqualTo(decoded);
     }
 
     @DisplayName("공통부/10/응답코드/X(4)")
@@ -97,6 +97,6 @@ class FullTextSegmentCodecXTest
         final byte[] encoded = newCodecInstance().encode(decoded, length);
         log.debug("encoded: {}", encoded);
         assertThat(encoded).isEqualTo(decoded.getBytes(FullTextSegmentCodecX.CHARSET));
-        assertThat(newCodecInstance().decode(encoded, length)).isEqualTo(decoded);
+        assertThat(newCodecInstance().decode(encoded)).isEqualTo(decoded);
     }
 }

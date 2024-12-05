@@ -63,7 +63,7 @@ class FullTextSegment {
     <V> V getValue(final ByteBuffer data) {
         final var dst = new byte[length];
         data.get(offset, dst);
-        return (V) codec.decode(dst, dst.length);
+        return (V) codec.decode(dst);
     }
 
     void setValue(final ByteBuffer data, final Object value) {
