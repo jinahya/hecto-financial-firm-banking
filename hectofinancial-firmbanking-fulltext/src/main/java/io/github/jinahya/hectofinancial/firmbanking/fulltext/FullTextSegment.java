@@ -5,6 +5,7 @@ import java.util.Objects;
 
 class FullTextSegment {
 
+    // ------------------------------------------------------------------------------------------ STATIC_FACTORY_METHODS
     static FullTextSegment newInstanceOf9(final int offset, final int length, final String tag) {
         return new FullTextSegment(offset, length, FullTextSegmentCodec.of9(), tag) {
         };

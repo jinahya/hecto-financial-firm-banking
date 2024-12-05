@@ -13,10 +13,6 @@ class FullTextSegmentCodecX
         super();
     }
 
-    String toSimplifiedString() {
-        return "X";
-    }
-
     // -----------------------------------------------------------------------------------------------------------------
     private byte[] encode_(final String decoded, final int length) {
         assert decoded != null;

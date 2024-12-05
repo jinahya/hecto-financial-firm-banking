@@ -17,10 +17,6 @@ class FullTextSegmentCodec9
         super();
     }
 
-    String toSimplifiedString() {
-        return "9";
-    }
-
     // -----------------------------------------------------------------------------------------------------------------
     private byte[] encode_(final int decoded, final int length) {
         assert decoded >= 0;
