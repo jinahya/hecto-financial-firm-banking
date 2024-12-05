@@ -19,7 +19,7 @@ class FullTextSegmentCodecX
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-    private byte[] encode(final String decoded, final int length) {
+    private byte[] encode_(final String decoded, final int length) {
         assert decoded != null;
         assert length > 0;
         final var encoded = new byte[length];
@@ -42,11 +42,11 @@ class FullTextSegmentCodecX
             throw new IllegalArgumentException("length(" + length + ") is not positive");
         }
         if (decoded == null) {
-            final var b = new byte[length];
-            Arrays.fill(b, (byte) 0x20);
-            return encode(b, length);
+            final var a = new byte[length];
+            Arrays.fill(a, (byte) 0x20);
+            return a;
         }
-        return encode(decoded.toString(), length);
+        return encode_(decoded.toString(), length);
     }
 
     @Override
@@ -58,6 +58,6 @@ class FullTextSegmentCodecX
         if (encoded.length > length) {
             throw new IllegalArgumentException("encoded.length(" + encoded.length + ") > length(" + length + ")");
         }
-        return new String(encoded, CHARSET).strip();
+        return new String(encoded, CHARSET).stripTrailing();
     }
 }

@@ -22,8 +22,8 @@ class FullTextSegmentCodec9
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-    private byte[] encode(final Integer decoded, final int length) {
-        assert decoded != null;
+    private byte[] encode_(final int decoded, final int length) {
+        assert decoded >= 0;
         assert length > 0;
         final var format = String.format("%%1$0%1$dd", length);
         final var bytes = String.format(format, decoded).getBytes(CHARSET);
@@ -43,10 +43,15 @@ class FullTextSegmentCodec9
             Arrays.fill(a, (byte) 0x20);
             return a;
         }
-        if (decoded instanceof Integer i) {
-            return encode(i, length);
+        if (decoded instanceof Number i) {
+            return encode_(i.intValue(), length);
         }
-        return encode(Integer.valueOf(decoded.toString()), length);
+        try {
+            return encode_(Integer.parseInt(decoded.toString()), length);
+        } catch (final NumberFormatException nfe) {
+            System.err.println("failed to parse " + decoded);
+            return encode(null, length);
+        }
     }
 
     @Override
@@ -62,6 +67,7 @@ class FullTextSegmentCodec9
         try {
             return Integer.parseInt(string, RADIX);
         } catch (final NumberFormatException nfe) {
+            System.err.println("failed to decode " + string);
             return null;
         }
     }

@@ -129,8 +129,12 @@ public class FullTextSection {
      * @param index the index of the segment.
      * @return the value of the segment of specified index in {@code int}.
      */
-    public Integer getNumber(final int index) {
-        return this.<Integer>getValue(index);
+    public int getInt(final int index) {
+        try {
+            return this.<Integer>getValue(index);
+        } catch (final NullPointerException npe) {
+            return 0;
+        }
     }
 
     /**
@@ -139,7 +143,7 @@ public class FullTextSection {
      * @param index the index of the segment.
      * @param value new value for the segment.
      */
-    public void setNumber(final int index, final Integer value) {
+    public void setInt(final int index, final Integer value) {
         setValue(index, value);
     }
 
@@ -151,11 +155,11 @@ public class FullTextSection {
      * @see #setDate(int, LocalDate)
      */
     public LocalDate getDate(final int index) {
-        return Optional.ofNullable(this.<Integer>getValue(index))
+        return Optional.of(getInt(index))
                 .filter(v -> v != 0)
                 .map(Objects::toString)
-                .map(String::strip)
-                .filter(v -> !v.isBlank())
+//                .map(String::strip)
+//                .filter(v -> !v.isBlank())
                 .map(v -> LocalDate.parse(v, FullTextSegmentCodecConstants.FORMATTER_DATE))
                 .orElse(null);
     }
@@ -183,11 +187,11 @@ public class FullTextSection {
      * @see #setTime(int, LocalTime)
      */
     public LocalTime getTime(final int index) {
-        return Optional.ofNullable(this.<Integer>getValue(index))
+        return Optional.of(getInt(index))
                 .filter(v -> v != 0)
                 .map(Objects::toString)
-                .map(String::strip)
-                .filter(s -> !s.isBlank())
+//                .map(String::strip)
+//                .filter(s -> !s.isBlank())
                 .map(v -> LocalTime.parse(v, FullTextSegmentCodecConstants.FORMATTER_TIME))
                 .orElse(null);
     }
@@ -201,7 +205,7 @@ public class FullTextSection {
      */
     public void setTime(final int index, final LocalTime value) {
         if (value == null) {
-            setValue(index, 0);
+            setInt(index, 0);
             return;
         }
         setValue(index, FullTextSegmentCodecConstants.FORMATTER_TIME.format(value));
