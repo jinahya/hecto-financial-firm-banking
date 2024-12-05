@@ -2,7 +2,6 @@ package io.github.jinahya.hectofinancial.firmbanking.fulltext;
 
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.Objects;
 
 class FullTextSegmentCodecX
         extends FullTextSegmentCodec<String> {
@@ -38,9 +37,7 @@ class FullTextSegmentCodecX
 
     @Override
     byte[] encode(final Object decoded, final int length) {
-        if (length <= 0) {
-            throw new IllegalArgumentException("length(" + length + ") is not positive");
-        }
+        assert length > 0;
         if (decoded == null) {
             final var a = new byte[length];
             Arrays.fill(a, (byte) 0x20);
@@ -51,7 +48,7 @@ class FullTextSegmentCodecX
 
     @Override
     String decode(final byte[] encoded) {
-        Objects.requireNonNull(encoded, "encoded is null");
+        assert encoded != null;
         return new String(encoded, CHARSET).stripTrailing();
     }
 }

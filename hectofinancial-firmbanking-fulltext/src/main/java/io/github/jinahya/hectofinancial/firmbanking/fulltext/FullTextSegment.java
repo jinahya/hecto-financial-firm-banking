@@ -61,14 +61,18 @@ class FullTextSegment {
 
     // -----------------------------------------------------------------------------------------------------------------
     <V> V getValue(final ByteBuffer data) {
+        assert data != null;
         final var dst = new byte[length];
         data.get(offset, dst);
-        return (V) codec.decode(dst);
+        @SuppressWarnings({"unchecked"})
+        final var decoded = (V) codec.decode(dst);
+        return decoded;
     }
 
     void setValue(final ByteBuffer data, final Object value) {
-        final var src = codec.encode(value, length);
-        data.put(offset, src);
+        assert data != null;
+        final var encoded = codec.encode(value, length);
+        data.put(offset, encoded);
     }
 
     // ---------------------------------------------------------------------------------------------------------- offset
