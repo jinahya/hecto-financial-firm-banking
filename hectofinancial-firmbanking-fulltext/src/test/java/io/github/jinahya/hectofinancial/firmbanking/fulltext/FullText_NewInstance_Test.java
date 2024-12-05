@@ -17,11 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 class FullText_NewInstance_Test {
 
-    static Stream<Arguments> getTextCategoryTextCodeTaskCodeAndResourceNameArgumentsStream() {
-        return FullText__TestUtils.getTextCategoryTextCodeTaskCodeAndResourceNameArgumentsStream();
-    }
-
-    static Stream<Arguments> getTextCategoryTextCodeAndTaskCodeArgumentsStream() {
+    private static Stream<Arguments> getTextCategoryTextCodeAndTaskCodeArgumentsStream() {
         return FullTextSection_NewBodyInstance_Test.getTextCategoryTextCodeAndTaskCodeArgumentsStream();
     }
 

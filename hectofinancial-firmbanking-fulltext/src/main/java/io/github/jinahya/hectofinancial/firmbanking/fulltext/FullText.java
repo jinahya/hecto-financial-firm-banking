@@ -42,7 +42,10 @@ public class FullText {
                 FullTextSection.newHeadInstance(category),
                 FullTextSection.newBodyInstance(category, textCode, taskCode)
         );
-        return new FullText(category, textCode, taskCode, sections);
+        final var instance = new FullText(category, textCode, taskCode, sections);
+        instance.setTextCode(textCode);
+        instance.setTaskCode(taskCode);
+        return instance;
     }
 
     /**
@@ -61,12 +64,12 @@ public class FullText {
         Objects.requireNonNull(channel, "channel is null");
         var data = FullTextUtils.receiveData(channel);
         if (security != null) {
-            data = security.decrypt(data);
+            data = security.decrypt(data.flip());
         }
         final var textCode = category.getHeadTextCode(data);
         final var taskCode = category.getHeadTaskCode(data);
         final var instance = newInstance(category, textCode, taskCode);
-        instance.setData(data); // set data without the security
+        instance.setData(data.flip()); // set data without the security
         instance.setSecurity(security); // should be set after the data.
         return instance;
     }
@@ -148,7 +151,12 @@ public class FullText {
      * @return the {@code 전문구분코드} of this text.
      */
     public String getTextCode() {
-        return textCode;
+        return applyHeadSection(s -> category.getHeadTextCode(s.getBuffer()));
+//        return textCode;
+    }
+
+    void setTextCode(final String textCode) {
+        acceptHeadSection(s -> category.setHeadTextCode(s.getBuffer(), textCode));
     }
 
     // -------------------------------------------------------------------------------------------------------- taskCode
@@ -159,7 +167,12 @@ public class FullText {
      * @return the {@code 업무구분코드} of this text.
      */
     public String getTaskCode() {
-        return taskCode;
+        return applyHeadSection(s -> category.getHeadTaskCode(s.getBuffer()));
+//        return taskCode;
+    }
+
+    void setTaskCode(final String taskCode) {
+        acceptHeadSection(s -> category.setHeadTaskCode(s.getBuffer(), taskCode));
     }
 
     // -------------------------------------------------------------------------------------------------------- sections
@@ -363,7 +376,6 @@ public class FullText {
      *
      * @param src the buffer whose {@link ByteBuffer#remaining() remaining} should be equal to {@link #getLength()}.
      * @see #getRawData()
-     * @see #rawData(ByteBuffer)
      */
     public void setRawData(final ByteBuffer src) {
         if (Objects.requireNonNull(src, "src is null").remaining() != length) {
@@ -396,9 +408,8 @@ public class FullText {
      *
      * @param src the source buffer.
      * @see #getData()
-     * @see #data(ByteBuffer)
      */
-    public void setData(final ByteBuffer src) {
+    void setData(final ByteBuffer src) {
         if (Objects.requireNonNull(src, "src is null").remaining() < length) {
             throw new IllegalArgumentException("src.remaining(" + src.remaining() + ") < length(" + length + ")");
         }
@@ -408,18 +419,6 @@ public class FullText {
             return;
         }
         setRawData(src);
-    }
-
-    /**
-     * Sets data with specified source buffer, and returns this text.
-     *
-     * @param src the source buffer.
-     * @return this text.
-     * @see #setData(ByteBuffer)
-     */
-    public FullText data(final ByteBuffer src) {
-        setData(src);
-        return this;
     }
 
     /**
