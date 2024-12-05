@@ -38,13 +38,14 @@ class FullTextSegmentCodecX
 
     @Override
     byte[] encode(final Object decoded, final int length) {
-        Objects.requireNonNull(decoded, "decoded is null");
         if (length <= 0) {
             throw new IllegalArgumentException("length(" + length + ") is not positive");
         }
-//        if (decoded instanceof String s) { // TODO: is this required?
-//            return encode(s, length);
-//        }
+        if (decoded == null) {
+            final var b = new byte[length];
+            Arrays.fill(b, (byte) 0x20);
+            return encode(b, length);
+        }
         return encode(decoded.toString(), length);
     }
 

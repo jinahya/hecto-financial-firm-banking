@@ -129,7 +129,7 @@ public class FullTextSection {
      * @param index the index of the segment.
      * @return the value of the segment of specified index in {@code int}.
      */
-    public int getInt(final int index) {
+    public Integer getNumber(final int index) {
         return this.<Integer>getValue(index);
     }
 
@@ -139,7 +139,7 @@ public class FullTextSection {
      * @param index the index of the segment.
      * @param value new value for the segment.
      */
-    public void setInt(final int index, final int value) {
+    public void setNumber(final int index, final Integer value) {
         setValue(index, value);
     }
 
