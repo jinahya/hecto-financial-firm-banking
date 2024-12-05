@@ -49,8 +49,7 @@ class FullTextSegmentCodec9
         try {
             return encode_(Integer.parseInt(decoded.toString()), length);
         } catch (final NumberFormatException nfe) {
-            System.err.println("failed to parse " + decoded);
-            return encode(null, length);
+            throw new IllegalArgumentException("invalid decoded value: " + decoded);
         }
     }
 
@@ -63,11 +62,13 @@ class FullTextSegmentCodec9
         if (encoded.length > length) {
             throw new IllegalArgumentException("encoded.length(" + encoded.length + ") > length(" + length + ")");
         }
-        final var string = new String(encoded, CHARSET);
+        final var string = new String(encoded, CHARSET).strip();
+        if (string.isBlank()) {
+            return null;
+        }
         try {
             return Integer.parseInt(string, RADIX);
         } catch (final NumberFormatException nfe) {
-            System.err.println("failed to decode " + string);
             return null;
         }
     }
