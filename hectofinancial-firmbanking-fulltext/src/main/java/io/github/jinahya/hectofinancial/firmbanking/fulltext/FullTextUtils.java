@@ -14,7 +14,7 @@ final class FullTextUtils {
 
     private static final FullTextSegmentCodec<Integer> LENGTH_CODEC = FullTextSegmentCodec.of9();
 
-    static void writeData(final WritableByteChannel channel, final ByteBuffer data) throws IOException {
+    static void sendData(final WritableByteChannel channel, final ByteBuffer data) throws IOException {
         if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
             throw new IllegalArgumentException("channel is not open");
         }
@@ -31,7 +31,7 @@ final class FullTextUtils {
         }
     }
 
-    static ByteBuffer readData(final ReadableByteChannel channel) throws IOException {
+    static ByteBuffer receiveData(final ReadableByteChannel channel) throws IOException {
         if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
             throw new IllegalArgumentException("channel is not open");
         }

@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -32,7 +33,9 @@ public class FullTextSection {
     static FullTextSection newHeadInstance(final FullTextCategory category) {
         Objects.requireNonNull(category, "category is null");
         final var segments = HEAD_SEGMENTS.computeIfAbsent(category, FullTextSectionUtils::loadHeadSegments);
-        return new FullTextSection(segments).reset();
+        final var instance = new FullTextSection(segments);
+        instance.reset();
+        return instance;
     }
 
     // category -> textCode -> taskCode -> segments
@@ -56,7 +59,9 @@ public class FullTextSection {
                 .computeIfAbsent(category, c -> Collections.synchronizedMap(new HashMap<>()))
                 .computeIfAbsent(textCode, tc -> Collections.synchronizedMap(new HashMap<>()))
                 .computeIfAbsent(taskCode, tc -> FullTextSectionUtils.loadBodySegments(category, textCode, tc));
-        return new FullTextSection(segments).reset();
+        final var instance = new FullTextSection(segments);
+        instance.reset();
+        return instance;
     }
 
     // ---------------------------------------------------------------------------------------------------- CONSTRUCTORS
@@ -118,11 +123,6 @@ public class FullTextSection {
         segment.setValue(buffer, value);
     }
 
-    public FullTextSection value(final int index, final Object value) {
-        setValue(index, value);
-        return this;
-    }
-
     /**
      * Returns the value, of a segment of specified index, in {@code int}.
      *
@@ -144,53 +144,75 @@ public class FullTextSection {
     }
 
     /**
-     * Sets specified value of {@code int} to the segment of specified index.
+     * Returns the value of specified segment index as an instance of {@link LocalDate}.
      *
-     * @param index the index of the segment.
-     * @param value new value for the segment.
-     * @return this section.
+     * @param index the segment index; starts from {@code 1}.
+     * @return the date value of {@code index}; {@code null} if not set.
+     * @see #setDate(int, LocalDate)
      */
-    public FullTextSection int__(final int index, final int value) {
-        setInt(index, value);
-        return this;
-    }
-
     public LocalDate getDate(final int index) {
-        final var value = getValue(index);
-        return LocalDate.parse(String.valueOf(value), FullTextSegmentCodecConstants.FORMATTER_DATE);
+        return Optional.ofNullable(this.<Integer>getValue(index))
+                .filter(v -> v != 0)
+                .map(Objects::toString)
+                .map(String::strip)
+                .filter(v -> !v.isBlank())
+                .map(v -> LocalDate.parse(v, FullTextSegmentCodecConstants.FORMATTER_DATE))
+                .orElse(null);
     }
 
+    /**
+     * Replaces the value of specified segment index with specified value.
+     *
+     * @param index the segment index; starts from {@code 1}.
+     * @param value new value for the segment at {@code index}.
+     * @see #getDate(int)
+     */
     public void setDate(final int index, final LocalDate value) {
-        Objects.requireNonNull(value, "value is null");
+        if (value == null) {
+            setValue(index, 0);
+            return;
+        }
         setValue(index, FullTextSegmentCodecConstants.FORMATTER_DATE.format(value));
     }
 
-    public FullTextSection date_(final int index, final LocalDate value) {
-        setDate(index, value);
-        return this;
-    }
-
+    /**
+     * Returns the value of specified segment index as an instance of {@link LocalTime}.
+     *
+     * @param index the segment index; starts from {@code 1}.
+     * @return the time value of {@code index}; {@code null} if not set.
+     * @see #setTime(int, LocalTime)
+     */
     public LocalTime getTime(final int index) {
-        final var value = getValue(index);
-        return LocalTime.parse(String.valueOf(value), FullTextSegmentCodecConstants.FORMATTER_TIME);
+        return Optional.ofNullable(this.<Integer>getValue(index))
+                .filter(v -> v != 0)
+                .map(Objects::toString)
+                .map(String::strip)
+                .filter(s -> !s.isBlank())
+                .map(v -> LocalTime.parse(v, FullTextSegmentCodecConstants.FORMATTER_TIME))
+                .orElse(null);
     }
 
+    /**
+     * Replaces the value of specified segment index with specified value.
+     *
+     * @param index the segment index; starts from {@code 1}.
+     * @param value new value for the segment at {@code index}.
+     * @see #getDate(int)
+     */
     public void setTime(final int index, final LocalTime value) {
-        Objects.requireNonNull(value, "value is null");
+        if (value == null) {
+            setValue(index, 0);
+            return;
+        }
         setValue(index, FullTextSegmentCodecConstants.FORMATTER_TIME.format(value));
-    }
-
-    public FullTextSection time_(final int index, final LocalTime value) {
-        setTime(index, value);
-        return this;
     }
 
     // ---------------------------------------------------------------------------------------------------------- length
 
     /**
-     * Returns the length of this section, in bytes.
+     * Returns the length of this section.
      *
-     * @return the length of this section, in bytes
+     * @return the length of this section.
      */
     public int getLength() {
         return length;
@@ -202,13 +224,10 @@ public class FullTextSection {
     }
 
     /**
-     * Resets this section by setting data with zeros.
-     *
-     * @return this section.
+     * Resets this section by setting data with spaces.
      */
-    public FullTextSection reset() {
+    public void reset() {
         Arrays.fill(buffer.array(), (byte) 0x20);
-        return this;
     }
 
     /**
@@ -221,47 +240,41 @@ public class FullTextSection {
     }
 
     ByteBuffer getData(final ByteBuffer dst) {
-        if (Objects.requireNonNull(dst, "dst is null").remaining() < buffer.capacity()) {
+        if (Objects.requireNonNull(dst, "dst is null").remaining() < length) {
             throw new IllegalArgumentException(
-                    "dst.remaining(" + dst.remaining() + ") < data.capacity(" + buffer.capacity() + ")"
+                    "dst.remaining(" + dst.remaining() + ") < length(" + length + ")"
             );
         }
         return dst.put(buffer.clear());
     }
 
     byte[] getData(final byte[] dst) {
-        if (Objects.requireNonNull(dst, "dst is null").length < buffer.capacity()) {
-            throw new IllegalArgumentException(
-                    "dst.length(" + dst.length + ") < data.capacity(" + buffer.capacity() + ")"
-            );
+        if (Objects.requireNonNull(dst, "dst is null").length < length) {
+            throw new IllegalArgumentException("dst.length(" + dst.length + ") < length(" + length + ")");
         }
         return getData(ByteBuffer.wrap(dst)).array();
     }
 
     byte[] getData() {
-        return getData(new byte[buffer.capacity()]);
+        return getData(new byte[length]);
     }
 
     void setData(final ByteBuffer src) {
-        if (Objects.requireNonNull(src, "src is null").remaining() > buffer.capacity()) {
-            throw new IllegalArgumentException(
-                    "src.remaining(" + src.remaining() + ") > data.capacity(" + buffer.capacity() + ")"
-            );
+        if (Objects.requireNonNull(src, "src is null").remaining() != length) {
+            throw new IllegalArgumentException("src.remaining(" + src.remaining() + ") != length(" + length + ")");
         }
         buffer.clear().put(src);
     }
 
     void setData(final byte[] src) {
-        if (Objects.requireNonNull(src, "src is null").length > buffer.capacity()) {
-            throw new IllegalArgumentException(
-                    "src.length(" + src.length + ") > data.capacity(" + buffer.capacity() + ")"
-            );
+        if (Objects.requireNonNull(src, "src is null").length != length) {
+            throw new IllegalArgumentException("src.length(" + src.length + ") > length(" + length + ")");
         }
         setData(ByteBuffer.wrap(src));
     }
 
     /**
-     * Applies this section's data to specified function, and returns the result.
+     * Applies this section's data buffer to specified function, and returns the result.
      *
      * @param function the function.
      * @param <R>      result type parameter
@@ -269,11 +282,11 @@ public class FullTextSection {
      */
     public <R> R applyData(final Function<? super ByteBuffer, ? extends R> function) {
         Objects.requireNonNull(function, "function is null");
-        return function.apply(buffer);
+        return function.apply(getBuffer());
     }
 
     /**
-     * Accepts this section's data to specified consumer.
+     * Accepts this section's data buffer to specified consumer.
      *
      * @param consumer the consumer.
      */

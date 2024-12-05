@@ -43,9 +43,10 @@ public class FullText {
                 FullTextSection.newHeadInstance(category),
                 FullTextSection.newBodyInstance(category, textCode, taskCode)
         );
-        return new FullText(category, sections)
-                .textCode(textCode)
-                .taskCode(taskCode);
+        final var instance = new FullText(category, sections);
+        instance.setTextCode(textCode);
+        instance.setTaskCode(taskCode);
+        return instance;
     }
 
     // ---------------------------------------------------------------------------------------------------- CONSTRUCTORS
@@ -264,12 +265,25 @@ public class FullText {
                 .collect(Collectors.joining());
     }
 
+    /**
+     * Returns a copy of the internal raw data.
+     *
+     * @return a copy of the internal raw data.
+     * @see #setRawData(ByteBuffer)
+     */
     public ByteBuffer getRawData() {
         final var dst = ByteBuffer.allocate(length);
         sections.forEach(s -> s.getData(dst));
         return dst;
     }
 
+    /**
+     * Replaces in internal data buffer's content with specified buffer's content.
+     *
+     * @param src the buffer whose {@link ByteBuffer#remaining() remaining} should be equal to {@link #getLength()}.
+     * @see #getRawData()
+     * @see #rawData(ByteBuffer)
+     */
     public void setRawData(final ByteBuffer src) {
         if (Objects.requireNonNull(src, "src is null").remaining() != length) {
             throw new IllegalArgumentException("src.remaining(" + src.remaining() + ") != length(" + length + ")");
@@ -280,6 +294,12 @@ public class FullText {
         }
     }
 
+    /**
+     * Replaces in internal data buffer's content with specified buffer's content, and returns this text.
+     *
+     * @param src the buffer whose {@link ByteBuffer#remaining() remaining} should be equal to {@link #getLength()}.
+     * @see #setRawData(ByteBuffer)
+     */
     public FullText rawData(final ByteBuffer src) {
         setRawData(src);
         return this;
@@ -306,7 +326,8 @@ public class FullText {
     }
 
     /**
-     * Returns a byte buffer of data copied.
+     * Returns a byte buffer of data copied, while encrypting when {@code cipher}, {@code key}, and(or) {@code params}
+     * are set.
      *
      * @return a byte buffer of data copied.
      * @see #setData(ByteBuffer)
@@ -327,7 +348,8 @@ public class FullText {
     }
 
     /**
-     * Sets data with specified source buffer.
+     * Sets data with specified source buffer, while decrypting when {@code cipher}, {@code key}, and(or) {@code params}
+     * are set.
      *
      * @param src the source buffer.
      * @see #getData()
@@ -386,11 +408,6 @@ public class FullText {
         return this;
     }
 
-    FullText textCode(final String textCode) {
-        setTextCode(textCode);
-        return this;
-    }
-
     /**
      * Returns the value of {@code 업무구분코드} of this full text.
      *
@@ -414,11 +431,6 @@ public class FullText {
         });
     }
 
-    FullText taskCode(final String taskCode) {
-        setTaskCode(taskCode);
-        return this;
-    }
-
     /**
      * Writes this text's data to specified channel.
      *
@@ -430,7 +442,7 @@ public class FullText {
             throw new IllegalArgumentException("channel is not open");
         }
         final var data = getData();
-        FullTextUtils.writeData(channel, data.flip());
+        FullTextUtils.sendData(channel, data.flip());
     }
 
     /**
@@ -443,7 +455,7 @@ public class FullText {
         if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
             throw new IllegalArgumentException("channel is not open");
         }
-        final var data = FullTextUtils.readData(channel);
+        final var data = FullTextUtils.receiveData(channel);
         setData(data.flip());
     }
 

@@ -56,6 +56,11 @@ class FullTextSegmentCodec9
         if (encoded.length > length) {
             throw new IllegalArgumentException("encoded.length(" + encoded.length + ") > length(" + length + ")");
         }
-        return Integer.parseInt(new String(encoded, CHARSET), RADIX);
+        final var string = new String(encoded, CHARSET);
+        try {
+            return Integer.parseInt(string, RADIX);
+        } catch (final NumberFormatException nfe) {
+            return null;
+        }
     }
 }
