@@ -193,6 +193,8 @@ public class FullText {
      * @see FullTextConstants#SECTION_INDEX_HEAD
      * @see FullTextConstants#SECTION_INDEX_BODY
      * @see #acceptSection(int, Consumer)
+     * @see #applyHeadSection(Function)
+     * @see #applyBodySection(Function)
      */
     public <R> R applySection(final int index, final Function<? super FullTextSection, ? extends R> function) {
         Objects.requireNonNull(function, "function is null");
@@ -223,6 +225,8 @@ public class FullText {
      * @see FullTextConstants#SECTION_INDEX_HEAD
      * @see FullTextConstants#SECTION_INDEX_BODY
      * @see #applySection(int, Function)
+     * @see #acceptHeadSection(Consumer)
+     * @see #acceptBodySection(Consumer)
      */
     public void acceptSection(final int index, final Consumer<? super FullTextSection> consumer) {
         Objects.requireNonNull(consumer, "consumer is null");
