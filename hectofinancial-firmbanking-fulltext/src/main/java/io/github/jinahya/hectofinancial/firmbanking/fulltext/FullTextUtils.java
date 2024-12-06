@@ -32,7 +32,6 @@ public final class FullTextUtils {
         if (length <= 0) {
             throw new IllegalArgumentException("length(" + length + ") is not positive");
         }
-        // write length
         for (var b = ByteBuffer.wrap(LENGTH_CODEC.encode(length, LENGTH_BYTES)); b.hasRemaining(); ) {
             final var bytes = channel.write(b);
             assert bytes >= 0;

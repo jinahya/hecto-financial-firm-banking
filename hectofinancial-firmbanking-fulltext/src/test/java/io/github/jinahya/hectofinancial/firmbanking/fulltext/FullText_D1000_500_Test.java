@@ -15,10 +15,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 class FullText_D1000_500_Test {
 
+    private static final String TEXT_CODE = "1000";
+
+    private static final String TASK_CODE = "100";
+
     @Test
     void __() {
         // ------------------------------------------------------------------------------------------------------- given
-        final var instance = FullText_TestUtils.loadFullText(FullTextCategory.D, "1000", "500");
+        final var instance = FullText_TestUtils.loadFullText(FullTextCategory.D, TEXT_CODE, TASK_CODE);
         final var textNumber = ThreadLocalRandom.current().nextInt(950000) + 1;
         // -------------------------------------------------------------------------------------------------------- when
         instance.acceptHeadSection(s -> {
@@ -30,10 +34,12 @@ class FullText_D1000_500_Test {
             s.setTime(9, LocalTime.now());
         });
         // -------------------------------------------------------------------------------------------------------- then
-        assertThat(instance.getTextCode()).isEqualTo("1000");
-        assertThat(instance.getTaskCode()).isEqualTo("500");
+        assertThat(instance.getTextCode()).isEqualTo(TEXT_CODE);
+        assertThat(instance.getTaskCode()).isEqualTo(TASK_CODE);
+        log.debug("head: [{}]", instance.getHeadDataString());
+        log.debug("body: [{}]", instance.getBodyDataString());
         final var string = instance.getDataString();
-        log.debug("data: START[{}]END", string);
+        log.debug("data: [{}]", string);
         assertThat(string).isNotNull().hasSize(instance.getLength());
     }
 }

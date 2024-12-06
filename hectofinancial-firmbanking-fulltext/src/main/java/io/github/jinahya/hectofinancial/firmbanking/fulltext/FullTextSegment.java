@@ -28,7 +28,6 @@ class FullTextSegment {
         this.length = length;
         this.codec = Objects.requireNonNull(codec, "codec is null");
         this.tag = Objects.requireNonNull(tag, "tag is null").strip();
-
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -87,7 +86,6 @@ class FullTextSegment {
     }
 
     // ----------------------------------------------------------------------------------------------------------- codec
-
     FullTextSegmentCodec<?> getCodec() {
         return codec;
     }
