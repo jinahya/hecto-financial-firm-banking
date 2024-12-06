@@ -35,7 +35,7 @@ class FullText_Write_Test {
 
     @MethodSource({"getTextCategoryTextCodeAndTaskCodeArgumentsStream"})
     @ParameterizedTest
-    void __secure(final FullTextCategory category, final String textCode, final String taskCode) throws IOException {
+    void __WithSecurity(final FullTextCategory category, final String textCode, final String taskCode) throws IOException {
         final var instance = FullText.newInstance(category, textCode, taskCode);
         FullTextSecurityTestUtils.acceptCipherKeyAndParams(c -> k -> p -> {
             instance.setSecurity(FullTextSecurity.newInstance(c, k, p));

@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -69,12 +70,21 @@ public class FullText {
         final var textCode = category.getHeadTextCode(data);
         final var taskCode = category.getHeadTaskCode(data);
         final var instance = newInstance(category, textCode, taskCode);
-        instance.setData(data.flip()); // set data before setting the security
-        instance.setSecurity(security); // should be set after the data.
+        instance.setSecurity(security);
+        instance.setRawData(data.flip());
         return instance;
     }
 
     // ---------------------------------------------------------------------------------------------------- CONSTRUCTORS
+
+    /**
+     * Creates a new instance with specified category and sections.
+     *
+     * @param category the category.
+     * @param sections the sections.
+     * @see #category
+     * @see #sections
+     */
     private FullText(final FullTextCategory category, final List<? extends FullTextSection> sections) {
         super();
         this.category = Objects.requireNonNull(category, "category is null");
@@ -82,7 +92,7 @@ public class FullText {
             throw new IllegalArgumentException("empty sections");
         }
         this.sections = List.copyOf(Objects.requireNonNull(sections, "sections is null"));
-        length = this.sections.stream().mapToInt(FullTextSection::getLength).sum(); // NullPointerException
+        length = this.sections.stream().mapToInt(FullTextSection::getLength).sum();
     }
 
     // JUST FOR THE MOCKING
@@ -222,18 +232,50 @@ public class FullText {
         });
     }
 
+    /**
+     * Applies the {@link FullTextConstants#SECTION_INDEX_HEAD head} section to specified function, and returns the
+     * result.
+     *
+     * @param function the function.
+     * @param <R>      result type parameter
+     * @return the result of the {@code function}.
+     * @see #applySection(int, Function)
+     * @see #acceptHeadSection(Consumer)
+     */
     public <R> R applyHeadSection(final Function<? super FullTextSection, ? extends R> function) {
         return applySection(FullTextConstants.SECTION_INDEX_HEAD, function);
     }
 
+    /**
+     * Accepts the {@link FullTextConstants#SECTION_INDEX_HEAD head} section to specified consumer.
+     *
+     * @param consumer the consumer.
+     * @see #applyHeadSection(Function)
+     */
     public void acceptHeadSection(final Consumer<? super FullTextSection> consumer) {
         acceptSection(FullTextConstants.SECTION_INDEX_HEAD, consumer);
     }
 
+    /**
+     * Applies the {@link FullTextConstants#SECTION_INDEX_BODY body} section to specified function, and returns the
+     * result.
+     *
+     * @param function the function.
+     * @param <R>      result type parameter
+     * @return the result of the {@code function}.
+     * @see #applySection(int, Function)
+     * @see #acceptBodySection(Consumer)
+     */
     public <R> R applyBodySection(final Function<? super FullTextSection, ? extends R> function) {
         return applySection(FullTextConstants.SECTION_INDEX_BODY, function);
     }
 
+    /**
+     * Accepts the {@link FullTextConstants#SECTION_INDEX_BODY body} section to specified consumer.
+     *
+     * @param consumer the consumer.
+     * @see #applyBodySection(Function)
+     */
     public void acceptBodySection(final Consumer<? super FullTextSection> consumer) {
         acceptSection(FullTextConstants.SECTION_INDEX_BODY, consumer);
     }
@@ -246,7 +288,7 @@ public class FullText {
      * @see #setHeadDate(LocalDate)
      */
     public LocalDate getHeadDate() {
-        return applySection(FullTextConstants.SECTION_INDEX_HEAD, category::getHeadDate);
+        return applyHeadSection(category::getHeadDate);
     }
 
     /**
@@ -257,8 +299,7 @@ public class FullText {
      * @see #getHeadDate()
      */
     public void setHeadDate(final LocalDate headDate) {
-        Objects.requireNonNull(headDate, "headDate is null");
-        acceptSection(FullTextConstants.SECTION_INDEX_HEAD, s -> category.setHeadDate(s, headDate));
+        acceptHeadSection(s -> category.setHeadDate(s, headDate));
     }
 
     /**
@@ -269,7 +310,7 @@ public class FullText {
      * @see #setHeadDate(LocalDate)
      */
     public LocalTime getHeadTime() {
-        return applySection(FullTextConstants.SECTION_INDEX_HEAD, category::getHeadTime);
+        return applyHeadSection(category::getHeadTime);
     }
 
     /**
@@ -280,37 +321,41 @@ public class FullText {
      * @see #getHeadDate()
      */
     public void setHeadTime(final LocalTime headTime) {
-        Objects.requireNonNull(headTime, "headTime is null");
-        acceptSection(FullTextConstants.SECTION_INDEX_HEAD, s -> category.setHeadTime(s, headTime));
+        acceptHeadSection(s -> category.setHeadTime(s, headTime));
     }
 
     /**
-     * Returns {@code 전송일자/전송시간} from the {@link FullTextConstants#SECTION_INDEX_HEAD head} section.
+     * Returns {@code 전송일시} from the {@link FullTextConstants#SECTION_INDEX_HEAD head} section.
      *
-     * @return the value of {@code 전송일자/전송시간} segment.
+     * @return the value of {@code 전송일시}; {@code null} when either {@link #getHeadDate() 전송일자} or
+     * {@link #getHeadTime() 전송시간} is {@code null}.
      * @see FullTextConstants#SECTION_INDEX_HEAD
-     * @see #setHeadDate(LocalDate)
+     * @see #getHeadDate()
+     * @see #getHeadTime()
+     * @see #setHeadDateTime(LocalDateTime)
      */
     public LocalDateTime getHeadDateTime() {
-        return LocalDateTime.of(getHeadDate(), getHeadTime());
+        return Optional.ofNullable(getHeadDate())
+                .flatMap(d -> Optional.ofNullable(getHeadTime()).map(t -> LocalDateTime.of(d, t)))
+                .orElse(null);
     }
 
     /**
-     * Sets {@code 전송일자/전송시간} to the {@link FullTextConstants#SECTION_INDEX_HEAD head} section, with specified value.
+     * Sets {@code 전송일시} to the {@link FullTextConstants#SECTION_INDEX_HEAD head} section, with specified value.
      *
      * @param headDateTime new value for the {@code 전송일자/전송시간} segment.
      * @see FullTextConstants#SECTION_INDEX_HEAD
-     * @see #getHeadDate()
-     * @see #setHeadDateTimeAsNow()
+     * @see #setHeadDate(LocalDate)
+     * @see #setHeadTime(LocalTime)
+     * @see #getHeadDateTime()
      */
     public void setHeadDateTime(final LocalDateTime headDateTime) {
-        Objects.requireNonNull(headDateTime, "headDateTime is null");
-        setHeadDate(LocalDate.from(headDateTime));
-        setHeadTime(LocalTime.from(headDateTime));
+        setHeadDate(Optional.ofNullable(headDateTime).map(LocalDate::from).orElse(null));
+        setHeadTime(Optional.ofNullable(headDateTime).map(LocalTime::from).orElse(null));
     }
 
     /**
-     * Sets {@code 전송일자/전송시간} to the {@link FullTextConstants#SECTION_INDEX_HEAD head} section, with
+     * Sets {@code 전송일시} to the {@link FullTextConstants#SECTION_INDEX_HEAD head} section, with
      * {@link LocalDateTime#now() now}.
      *
      * @see FullTextConstants#SECTION_INDEX_HEAD
@@ -325,7 +370,7 @@ public class FullText {
      *
      * @return a string representation of the {@link FullTextConstants#SECTION_INDEX_HEAD head} section.
      */
-    public String getHeadString() {
+    public String getHeadDataString() {
         return applyHeadSection(FullTextSection::getDataString);
     }
 
@@ -334,7 +379,7 @@ public class FullText {
      *
      * @return a string representation of the {@link FullTextConstants#SECTION_INDEX_BODY body} section.
      */
-    public String getBodyString() {
+    public String getBodyDataString() {
         return applyBodySection(FullTextSection::getDataString);
     }
 
@@ -350,9 +395,9 @@ public class FullText {
     }
 
     /**
-     * Returns a copy of the internal raw data.
+     * Returns a byte buffer of all sections' data.
      *
-     * @return a copy of the internal raw data.
+     * @return a byte buffer of all sections' data with zero {@code remaining}.
      * @see #setRawData(ByteBuffer)
      */
     public ByteBuffer getRawData() {
@@ -362,12 +407,13 @@ public class FullText {
     }
 
     /**
-     * Replaces in internal data buffer's content with specified buffer's content.
+     * Sets specified buffer's content to this text.
      *
-     * @param src the buffer whose {@link ByteBuffer#remaining() remaining} should be equal to {@link #getLength()}.
+     * @param src the buffer whose {@link ByteBuffer#remaining() remaining} should be equal to
+     *            {@link #getLength() length} of this text.
      * @see #getRawData()
      */
-    public void setRawData(final ByteBuffer src) {
+    void setRawData(final ByteBuffer src) {
         if (Objects.requireNonNull(src, "src is null").remaining() != length) {
             throw new IllegalArgumentException("src.remaining(" + src.remaining() + ") != length(" + length + ")");
         }
@@ -378,8 +424,8 @@ public class FullText {
     }
 
     /**
-     * Returns a byte buffer of data copied, while encrypting when {@link #setSecurity(FullTextSecurity) security} is
-     * set.
+     * Returns a byte buffer of this text's data, while encrypting when {@link #setSecurity(FullTextSecurity) security}
+     * is set.
      *
      * @return a byte buffer of data copied.
      * @see #setData(ByteBuffer)
@@ -412,7 +458,7 @@ public class FullText {
     }
 
     /**
-     * Writes this text to specified channel.
+     * Writes this text's data to specified channel.
      *
      * @param channel the channel.
      * @throws IOException if an I/O error occurs.
