@@ -29,6 +29,9 @@ import java.util.stream.Collectors;
  * @see FullTextSection
  * @see FullTextCrypto
  */
+@SuppressWarnings({
+        "java:S1192" // String literals should not be duplicated
+})
 public class FullText {
 
     // ------------------------------------------------------------------------------------------ STATIC_FACTORY_METHODS
@@ -197,7 +200,7 @@ public class FullText {
     }
 
     // -------------------------------------------------------------------------------------------------------- sections
-    List<? extends FullTextSection> getSections() {
+    List<FullTextSection> getSections() {
         return sections;
     }
 
@@ -546,7 +549,7 @@ public class FullText {
     // -----------------------------------------------------------------------------------------------------------------
     private final FullTextCategory category;
 
-    private final List<? extends FullTextSection> sections;
+    private final List<FullTextSection> sections;
 
     private final int length;
 

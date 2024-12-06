@@ -151,8 +151,7 @@ public class FullTextSection {
      * @see #setDate(int, LocalDate)
      */
     public LocalDate getDate(final int index) {
-        return Optional.ofNullable(getInt(index))
-                .filter(v -> v != 0)
+        return Optional.ofNullable(getValue(index))
                 .map(Objects::toString)
                 .map(v -> LocalDate.parse(v, FullTextSegmentCodecConstants.FORMATTER_DATE))
                 .orElse(null);
@@ -167,7 +166,7 @@ public class FullTextSection {
      */
     public void setDate(final int index, final LocalDate value) {
         if (value == null) {
-            setValue(index, 0);
+            setValue(index, null);
             return;
         }
         setValue(index, FullTextSegmentCodecConstants.FORMATTER_DATE.format(value));
@@ -181,8 +180,7 @@ public class FullTextSection {
      * @see #setTime(int, LocalTime)
      */
     public LocalTime getTime(final int index) {
-        return Optional.ofNullable(getInt(index))
-                .filter(v -> v != 0)
+        return Optional.ofNullable(getValue(index))
                 .map(Objects::toString)
                 .map(v -> LocalTime.parse(v, FullTextSegmentCodecConstants.FORMATTER_TIME))
                 .orElse(null);
@@ -197,7 +195,7 @@ public class FullTextSection {
      */
     public void setTime(final int index, final LocalTime value) {
         if (value == null) {
-            setInt(index, 0);
+            setInt(index, null);
             return;
         }
         setValue(index, FullTextSegmentCodecConstants.FORMATTER_TIME.format(value));

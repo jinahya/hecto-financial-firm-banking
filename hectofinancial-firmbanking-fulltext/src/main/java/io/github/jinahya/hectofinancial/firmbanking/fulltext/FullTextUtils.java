@@ -51,7 +51,7 @@ public final class FullTextUtils {
         final var a = new byte[LENGTH_BYTES];
         for (final var b = ByteBuffer.wrap(a); b.hasRemaining(); ) {
             if (channel.read(b) == -1) {
-                throw new EOFException("unexpected end-of-file while reading length bytes");
+                throw new EOFException("unexpected end-of-file while reading data length");
             }
         }
         return LENGTH_CODEC.decode(a);
@@ -74,13 +74,13 @@ public final class FullTextUtils {
             throw new IllegalArgumentException("channel is not open");
         }
         final int length = readLength(channel);
-        final var b = ByteBuffer.allocate(length);
-        while (b.hasRemaining()) {
-            if (channel.read(b) == -1) {
-                throw new EOFException("unexpected end-of-file while reading text bytes");
+        final var data = ByteBuffer.allocate(length);
+        while (data.hasRemaining()) {
+            if (channel.read(data) == -1) {
+                throw new EOFException("unexpected end-of-file while reading data");
             }
         }
-        return b;
+        return data;
     }
 
     // ---------------------------------------------------------------------------------------------------- CONSTRUCTORS

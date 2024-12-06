@@ -12,7 +12,7 @@ final class FullTextSegmentCodecConstants {
     static final DateTimeFormatter FORMATTER_DATE = DateTimeFormatter.ofPattern(PATTERN_DATE);
 
     // -----------------------------------------------------------------------------------------------------------------
-    private static final String PATTERN_TIME = "HHmmss";
+    private static final String PATTERN_TIME = "[HH]mmss";
 
 //    private static final int LENGTH_TIME = PATTERN_TIME.length();
 
