@@ -5,6 +5,7 @@ import java.util.Objects;
 
 class FullTextSegment {
 
+    // ------------------------------------------------------------------------------------------ STATIC_FACTORY_METHODS
     static FullTextSegment newInstanceOf9(final int offset, final int length, final String tag) {
         return new FullTextSegment(offset, length, FullTextSegmentCodec.of9(), tag) {
         };
@@ -61,14 +62,18 @@ class FullTextSegment {
 
     // -----------------------------------------------------------------------------------------------------------------
     <V> V getValue(final ByteBuffer data) {
+        assert data != null;
         final var dst = new byte[length];
         data.get(offset, dst);
-        return (V) codec.decode(dst, dst.length);
+        @SuppressWarnings({"unchecked"})
+        final var decoded = (V) codec.decode(dst);
+        return decoded;
     }
 
     void setValue(final ByteBuffer data, final Object value) {
-        final var src = codec.encode(value, length);
-        data.put(offset, src);
+        assert data != null;
+        final var encoded = codec.encode(value, length);
+        data.put(offset, encoded);
     }
 
     // ---------------------------------------------------------------------------------------------------------- offset

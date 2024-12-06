@@ -32,7 +32,7 @@ class FullTextSegmentCodec9Test
     @Test
     void decode__110() {
         final var encoded = "0000000001".getBytes();
-        final var decoded = newCodecInstance().decode(encoded, 10);
+        final var decoded = newCodecInstance().decode(encoded);
         log.debug("decoded: {}", decoded);
         assertThat(decoded).isEqualTo(1);
     }
@@ -45,7 +45,7 @@ class FullTextSegmentCodec9Test
         final int length = 3;
         final byte[] encoded = newCodecInstance().encode(decoded, length);
         log.debug("decoded: {}, encoded: {}", decoded, encoded);
-        assertThat(newCodecInstance().decode(encoded, length)).isEqualTo(decoded);
+        assertThat(newCodecInstance().decode(encoded)).isEqualTo(decoded);
     }
 
     @DisplayName("공통부/7/전문번호/9(6)")
@@ -55,7 +55,7 @@ class FullTextSegmentCodec9Test
         final int length = 6;
         final byte[] encoded = newCodecInstance().encode(decoded, length);
         log.debug("decoded: {}, encoded: {}", decoded, encoded);
-        assertThat(newCodecInstance().decode(encoded, length)).isEqualTo(decoded);
+        assertThat(newCodecInstance().decode(encoded)).isEqualTo(decoded);
     }
 
     @DisplayName("공통부/8/전송일자/9(8)")
@@ -67,7 +67,7 @@ class FullTextSegmentCodec9Test
         final int length = 8;
         final byte[] encoded = newCodecInstance().encode(decoded, length);
         log.debug("decoded: {}, encoded: {}", decoded, encoded);
-        assertThat(newCodecInstance().decode(encoded, length)).isEqualTo(decoded);
+        assertThat(newCodecInstance().decode(encoded)).isEqualTo(decoded);
     }
 
     @DisplayName("공통부/9/전송시간/9(6)")
@@ -79,6 +79,6 @@ class FullTextSegmentCodec9Test
         final int length = 6;
         final byte[] encoded = newCodecInstance().encode(decoded, length);
         log.debug("decoded: {}, encoded: {}", decoded, encoded);
-        assertThat(newCodecInstance().decode(encoded, length)).isEqualTo(decoded);
+        assertThat(newCodecInstance().decode(encoded)).isEqualTo(decoded);
     }
 }

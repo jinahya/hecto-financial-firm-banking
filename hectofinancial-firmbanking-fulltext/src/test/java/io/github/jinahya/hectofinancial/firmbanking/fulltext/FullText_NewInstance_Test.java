@@ -8,7 +8,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.IOException;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,11 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 class FullText_NewInstance_Test {
 
-    static Stream<Arguments> getTextCategoryTextCodeTaskCodeAndResourceNameArgumentsStream() {
-        return FullText__TestUtils.getTextCategoryTextCodeTaskCodeAndResourceNameArgumentsStream();
-    }
-
-    static Stream<Arguments> getTextCategoryTextCodeAndTaskCodeArgumentsStream() {
+    private static Stream<Arguments> getTextCategoryTextCodeAndTaskCodeArgumentsStream() {
         return FullTextSection_NewBodyInstance_Test.getTextCategoryTextCodeAndTaskCodeArgumentsStream();
     }
 
@@ -30,11 +25,10 @@ class FullText_NewInstance_Test {
             "getTextCategoryTextCodeAndTaskCodeArgumentsStream"
     })
     @ParameterizedTest
-    void __(final FullTextCategory category, final String textCode, final String taskCode)
-            throws IOException {
+    void __(final FullTextCategory category, final String textCode, final String taskCode) {
         final var text = FullText.newInstance(category, textCode, taskCode);
         assertThat(text).isNotNull().satisfies(t -> {
-            assertThat(t.sections)
+            assertThat(t.getSections())
                     .isNotNull()
                     .doesNotContainNull()
                     .hasSizeGreaterThanOrEqualTo(2)

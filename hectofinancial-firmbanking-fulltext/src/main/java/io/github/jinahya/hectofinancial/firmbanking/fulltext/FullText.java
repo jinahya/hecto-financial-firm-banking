@@ -1,17 +1,15 @@
 package io.github.jinahya.hectofinancial.firmbanking.fulltext;
 
-import javax.crypto.Cipher;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
-import java.security.Key;
-import java.security.spec.AlgorithmParameterSpec;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -22,6 +20,8 @@ import java.util.stream.Collectors;
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  * @see <a href="https://develop.sbsvc.online/27/onlineDocList.do">실시간펌뱅킹</a>
  * @see <a href="https://develop.sbsvc.online/31/onlineDocList.do">실시간펌뱅킹(외화)</a>
+ * @see #newInstance(FullTextCategory, String, String)
+ * @see #readInstance(FullTextCategory, ReadableByteChannel, FullTextCipher)
  */
 public class FullText {
 
@@ -43,20 +43,55 @@ public class FullText {
                 FullTextSection.newHeadInstance(category),
                 FullTextSection.newBodyInstance(category, textCode, taskCode)
         );
-        return new FullText(category, sections)
-                .textCode(textCode)
-                .taskCode(taskCode);
+        final var instance = new FullText(category, sections);
+        instance.setTextCode(textCode);
+        instance.setTaskCode(taskCode);
+        return instance;
+    }
+
+    /**
+     * Reads an instance from specified channel.
+     *
+     * @param category a category of the {@code 전문}.
+     * @param channel  the channel.
+     * @param cipher   a cipher; may be {@code null}.
+     * @return a new instance.
+     * @throws IOException if an I/O error occurs.
+     */
+    public static FullText readInstance(final FullTextCategory category, final ReadableByteChannel channel,
+                                        final FullTextCipher cipher)
+            throws IOException {
+        Objects.requireNonNull(category, "category is null");
+        Objects.requireNonNull(channel, "channel is null");
+        var data = FullTextUtils.receiveData(channel);
+        if (cipher != null) {
+            data = cipher.decrypt(data.flip());
+        }
+        final var textCode = category.getHeadTextCode(data);
+        final var taskCode = category.getHeadTaskCode(data);
+        final var instance = newInstance(category, textCode, taskCode);
+        instance.setCipher(cipher);
+        instance.setRawData(data.flip());
+        return instance;
     }
 
     // ---------------------------------------------------------------------------------------------------- CONSTRUCTORS
+
+    /**
+     * Creates a new instance with specified category and sections.
+     *
+     * @param category the category.
+     * @param sections the sections.
+     * @see #category
+     * @see #sections
+     */
     private FullText(final FullTextCategory category, final List<? extends FullTextSection> sections) {
         super();
-        Objects.requireNonNull(category, "category is null");
+        this.category = Objects.requireNonNull(category, "category is null");
         if (Objects.requireNonNull(sections, "sections is null").isEmpty()) {
             throw new IllegalArgumentException("empty sections");
         }
-        this.category = category;
-        this.sections = List.copyOf(sections);
+        this.sections = List.copyOf(Objects.requireNonNull(sections, "sections is null"));
         length = this.sections.stream().mapToInt(FullTextSection::getLength).sum();
     }
 
@@ -70,6 +105,11 @@ public class FullText {
 
     // -----------------------------------------------------------------------------------------------------------------
 
+    /**
+     * Returns a string representation of this text.
+     *
+     * @return a string representation of this text.
+     */
     @Override
     public String toString() {
         return super.toString() + '{' +
@@ -95,10 +135,50 @@ public class FullText {
         return Objects.hash(category, sections, length);
     }
 
-    // -------------------------------------------------------------------------------------------------------- sections
+    // -------------------------------------------------------------------------------------------------------- category
 
     /**
-     * Applies the section of specified index to specified function, and return the result.
+     * Returns the category of this text.
+     *
+     * @return the category of this text.
+     */
+    public FullTextCategory getCategory() {
+        return category;
+    }
+
+    /**
+     * Returns the {@code 전문구분코드} of this text.
+     *
+     * @return the {@code 전문구분코드} of this text.
+     */
+    public String getTextCode() {
+        return applyHeadSection(s -> category.getHeadTextCode(s.getBuffer()));
+    }
+
+    void setTextCode(final String textCode) {
+        acceptHeadSection(s -> category.setHeadTextCode(s.getBuffer(), textCode));
+    }
+
+    /**
+     * Returns the {@code 업무구분코드} of this text.
+     *
+     * @return the {@code 업무구분코드} of this text.
+     */
+    public String getTaskCode() {
+        return applyHeadSection(s -> category.getHeadTaskCode(s.getBuffer()));
+    }
+
+    void setTaskCode(final String taskCode) {
+        acceptHeadSection(s -> category.setHeadTaskCode(s.getBuffer(), taskCode));
+    }
+
+    // -------------------------------------------------------------------------------------------------------- sections
+    List<? extends FullTextSection> getSections() {
+        return sections;
+    }
+
+    /**
+     * Applies this text's section of specified index to specified function, and return the result.
      * <p>
      * {@snippet lang = java:
      * var date = applySection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
@@ -106,7 +186,7 @@ public class FullText {
      * });
      *}
      *
-     * @param index    the section index; starting at {@code 1}.
+     * @param index    the index of the section to apply; starting at {@code 1}.
      * @param function the function to be applied with the section of {@code index}.
      * @param <R>      result type parameter
      * @return the result of the {@code function}.
@@ -128,7 +208,7 @@ public class FullText {
     }
 
     /**
-     * Accepts the section of specified index to specified consumer.
+     * Accepts this text's section of specified index to specified consumer.
      * <p>
      * {@snippet lang = java:
      * acceptSection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
@@ -138,7 +218,7 @@ public class FullText {
      * });
      *}
      *
-     * @param index    the section index; starting at {@code 1}.
+     * @param index    the index of the section to accept; starting at {@code 1}.
      * @param consumer the consumer to be accepted with the section of {@code index}.
      * @see FullTextConstants#SECTION_INDEX_HEAD
      * @see FullTextConstants#SECTION_INDEX_BODY
@@ -152,35 +232,67 @@ public class FullText {
         });
     }
 
+    /**
+     * Applies this text's {@link FullTextConstants#SECTION_INDEX_HEAD head} section to specified function, and returns
+     * the result.
+     *
+     * @param function the function.
+     * @param <R>      result type parameter
+     * @return the result of the {@code function}.
+     * @see #applySection(int, Function)
+     * @see #acceptHeadSection(Consumer)
+     */
     public <R> R applyHeadSection(final Function<? super FullTextSection, ? extends R> function) {
         return applySection(FullTextConstants.SECTION_INDEX_HEAD, function);
     }
 
+    /**
+     * Accepts this text's {@link FullTextConstants#SECTION_INDEX_HEAD head} section to specified consumer.
+     *
+     * @param consumer the consumer.
+     * @see #applyHeadSection(Function)
+     */
     public void acceptHeadSection(final Consumer<? super FullTextSection> consumer) {
         acceptSection(FullTextConstants.SECTION_INDEX_HEAD, consumer);
     }
 
+    /**
+     * Applies this text's {@link FullTextConstants#SECTION_INDEX_BODY body} section to specified function, and returns
+     * the result.
+     *
+     * @param function the function.
+     * @param <R>      result type parameter
+     * @return the result of the {@code function}.
+     * @see #applySection(int, Function)
+     * @see #acceptBodySection(Consumer)
+     */
     public <R> R applyBodySection(final Function<? super FullTextSection, ? extends R> function) {
         return applySection(FullTextConstants.SECTION_INDEX_BODY, function);
     }
 
+    /**
+     * Accepts this text's {@link FullTextConstants#SECTION_INDEX_BODY body} section to specified consumer.
+     *
+     * @param consumer the consumer.
+     * @see #applyBodySection(Function)
+     */
     public void acceptBodySection(final Consumer<? super FullTextSection> consumer) {
         acceptSection(FullTextConstants.SECTION_INDEX_BODY, consumer);
     }
 
     /**
-     * Returns {@code 전송일자} segment's value of section {@value FullTextConstants#SECTION_INDEX_HEAD}.
+     * Returns {@code 전송일자} from the {@link FullTextConstants#SECTION_INDEX_HEAD head} section of this text.
      *
      * @return the value of {@code 전송일자} segment.
      * @see FullTextConstants#SECTION_INDEX_HEAD
      * @see #setHeadDate(LocalDate)
      */
     public LocalDate getHeadDate() {
-        return applySection(FullTextConstants.SECTION_INDEX_HEAD, category::getHeadDate);
+        return applyHeadSection(category::getHeadDate);
     }
 
     /**
-     * Sets {@code 전송일자} segment's value, of section {@value FullTextConstants#SECTION_INDEX_HEAD}, with specified
+     * Sets {@code 전송일자} to the {@link FullTextConstants#SECTION_INDEX_HEAD head} section of this text, with specified
      * value.
      *
      * @param headDate new value for the {@code 전송일자} segment.
@@ -188,23 +300,22 @@ public class FullText {
      * @see #getHeadDate()
      */
     public void setHeadDate(final LocalDate headDate) {
-        Objects.requireNonNull(headDate, "headDate is null");
-        acceptSection(FullTextConstants.SECTION_INDEX_HEAD, s -> category.setHeadDate(s, headDate));
+        acceptHeadSection(s -> category.setHeadDate(s, headDate));
     }
 
     /**
-     * Returns {@code 전송시간} segment's value of section {@value FullTextConstants#SECTION_INDEX_HEAD}.
+     * Returns {@code 전송시간} from the {@link FullTextConstants#SECTION_INDEX_HEAD head} section of this text.
      *
      * @return the value of {@code 전송시간} segment.
      * @see FullTextConstants#SECTION_INDEX_HEAD
      * @see #setHeadDate(LocalDate)
      */
     public LocalTime getHeadTime() {
-        return applySection(FullTextConstants.SECTION_INDEX_HEAD, category::getHeadTime);
+        return applyHeadSection(category::getHeadTime);
     }
 
     /**
-     * Sets {@code 전송시간} segment's value, of section {@value FullTextConstants#SECTION_INDEX_HEAD}, with specified
+     * Sets {@code 전송시간} from the {@link FullTextConstants#SECTION_INDEX_HEAD head} section of this text, with specified
      * value.
      *
      * @param headTime new value for the {@code 전송시간} segment.
@@ -212,39 +323,43 @@ public class FullText {
      * @see #getHeadDate()
      */
     public void setHeadTime(final LocalTime headTime) {
-        Objects.requireNonNull(headTime, "headTime is null");
-        acceptSection(FullTextConstants.SECTION_INDEX_HEAD, s -> category.setHeadTime(s, headTime));
+        acceptHeadSection(s -> category.setHeadTime(s, headTime));
     }
 
     /**
-     * Returns {@code 전송일자/전송시간} segment's value of section {@value FullTextConstants#SECTION_INDEX_HEAD}.
+     * Returns {@code 전송일시} from the {@link FullTextConstants#SECTION_INDEX_HEAD head} section of this text.
      *
-     * @return the value of {@code 전송일자/전송시간} segment.
+     * @return the value of {@code 전송일시}; {@code null} when either {@link #getHeadDate() 전송일자} or
+     * {@link #getHeadTime() 전송시간} is {@code null}.
      * @see FullTextConstants#SECTION_INDEX_HEAD
-     * @see #setHeadDate(LocalDate)
+     * @see #getHeadDate()
+     * @see #getHeadTime()
+     * @see #setHeadDateTime(LocalDateTime)
      */
     public LocalDateTime getHeadDateTime() {
-        return LocalDateTime.of(getHeadDate(), getHeadTime());
+        return Optional.ofNullable(getHeadDate())
+                .flatMap(d -> Optional.ofNullable(getHeadTime()).map(t -> LocalDateTime.of(d, t)))
+                .orElse(null);
     }
 
     /**
-     * Sets {@code 전송일자/전송시간} segment's value, of section {@value FullTextConstants#SECTION_INDEX_HEAD}, with specified
+     * Sets {@code 전송일시} to the {@link FullTextConstants#SECTION_INDEX_HEAD head} section of this text, with specified
      * value.
      *
      * @param headDateTime new value for the {@code 전송일자/전송시간} segment.
      * @see FullTextConstants#SECTION_INDEX_HEAD
-     * @see #getHeadDate()
-     * @see #setHeadDateTimeAsNow()
+     * @see #setHeadDate(LocalDate)
+     * @see #setHeadTime(LocalTime)
+     * @see #getHeadDateTime()
      */
     public void setHeadDateTime(final LocalDateTime headDateTime) {
-        Objects.requireNonNull(headDateTime, "headDateTime is null");
-        setHeadDate(LocalDate.from(headDateTime));
-        setHeadTime(LocalTime.from(headDateTime));
+        setHeadDate(Optional.ofNullable(headDateTime).map(LocalDate::from).orElse(null));
+        setHeadTime(Optional.ofNullable(headDateTime).map(LocalTime::from).orElse(null));
     }
 
     /**
-     * Sets {@code 전송일자/전송시간} segment's value, of section {@value FullTextConstants#SECTION_INDEX_HEAD}, with
-     * {@link LocalDateTime#now()}.
+     * Sets {@code 전송일시} to the {@link FullTextConstants#SECTION_INDEX_HEAD head} section of this text, with
+     * {@link LocalDateTime#now() now}.
      *
      * @see FullTextConstants#SECTION_INDEX_HEAD
      * @see #setHeadDateTime(LocalDateTime)
@@ -254,9 +369,27 @@ public class FullText {
     }
 
     /**
-     * Returns a string representation of the internal data buffer.
+     * Returns a string representation of the {@link FullTextConstants#SECTION_INDEX_HEAD head} section of this text.
      *
-     * @return a string representation of the internal data buffer
+     * @return a string representation of the {@link FullTextConstants#SECTION_INDEX_HEAD head} section of this text.
+     */
+    public String getHeadDataString() {
+        return applyHeadSection(FullTextSection::getDataString);
+    }
+
+    /**
+     * Returns a string representation of the {@link FullTextConstants#SECTION_INDEX_BODY body} section of this text.
+     *
+     * @return a string representation of the {@link FullTextConstants#SECTION_INDEX_BODY body} section of this text.
+     */
+    public String getBodyDataString() {
+        return applyBodySection(FullTextSection::getDataString);
+    }
+
+    /**
+     * Returns a string representation of this text's data.
+     *
+     * @return a string representation of this text's data.
      */
     public String getDataString() {
         return sections.stream()
@@ -264,13 +397,26 @@ public class FullText {
                 .collect(Collectors.joining());
     }
 
-    public ByteBuffer getRawData() {
+    /**
+     * Returns a byte buffer of this text's raw(unencrypted) data.
+     *
+     * @return a byte buffer of this text's raw(unencrypted) data.
+     * @see #setRawData(ByteBuffer)
+     */
+    private ByteBuffer getRawData() {
         final var dst = ByteBuffer.allocate(length);
         sections.forEach(s -> s.getData(dst));
         return dst;
     }
 
-    public void setRawData(final ByteBuffer src) {
+    /**
+     * Sets specified buffer of raw(unencrypted) data to this text.
+     *
+     * @param src the buffer of war(unencrypted) data, whose {@link ByteBuffer#remaining() remaining} should be equal to
+     *            {@link #getLength() length} of this text.
+     * @see #getRawData()
+     */
+    void setRawData(final ByteBuffer src) {
         if (Objects.requireNonNull(src, "src is null").remaining() != length) {
             throw new IllegalArgumentException("src.remaining(" + src.remaining() + ") != length(" + length + ")");
         }
@@ -280,143 +426,38 @@ public class FullText {
         }
     }
 
-    public FullText rawData(final ByteBuffer src) {
-        setRawData(src);
-        return this;
-    }
-
-    private boolean initCipher(final int opmode) {
-        if (cipher != null && key != null) {
-            if (params != null) {
-                try {
-                    cipher.init(opmode, key, params);
-                } catch (final Exception e) {
-                    throw new RuntimeException("failed to initialize the cipher", e);
-                }
-            } else {
-                try {
-                    cipher.init(opmode, key);
-                } catch (final Exception e) {
-                    throw new RuntimeException("failed to initialize the cipher", e);
-                }
-            }
-            return true;
-        }
-        return false;
-    }
-
     /**
-     * Returns a byte buffer of data copied.
+     * Returns a byte buffer of this text's data, while encrypting when {@link #setCipher(FullTextCipher) cipher} is
+     * set.
      *
      * @return a byte buffer of data copied.
      * @see #setData(ByteBuffer)
      */
     public ByteBuffer getData() {
         final var data = getRawData();
-        if (initCipher(Cipher.ENCRYPT_MODE)) {
-            final var encrypted = ByteBuffer.allocate(cipher.getOutputSize(data.flip().remaining()));
-            try {
-                final var bytes = cipher.doFinal(data, encrypted);
-                assert bytes >= encrypted.capacity();
-            } catch (final Exception e) {
-                throw new RuntimeException("failed to encrypt", e);
-            }
-            return encrypted;
+        if (cipher != null) {
+            return cipher.encrypt(data.flip());
         }
         return data;
     }
 
     /**
-     * Sets data with specified source buffer.
+     * Sets data with specified buffer's remaining bytes, while decrypting when
+     * {@link #setCipher(FullTextCipher) cipher} set.
      *
      * @param src the source buffer.
      * @see #getData()
-     * @see #data(ByteBuffer)
      */
-    public void setData(final ByteBuffer src) {
+    void setData(final ByteBuffer src) {
         if (Objects.requireNonNull(src, "src is null").remaining() < length) {
             throw new IllegalArgumentException("src.remaining(" + src.remaining() + ") < length(" + length + ")");
         }
-        if (initCipher(Cipher.DECRYPT_MODE)) {
-            final var decrypted = ByteBuffer.allocate(cipher.getOutputSize(src.remaining()));
-            try {
-                cipher.doFinal(src, decrypted);
-                setRawData(decrypted.flip());
-                return;
-            } catch (final Exception e) {
-                throw new RuntimeException("failed to decrypt", e);
-            }
+        if (cipher != null) {
+            final var decrypted = cipher.decrypt(src);
+            setRawData(decrypted.flip());
+            return;
         }
         setRawData(src);
-    }
-
-    /**
-     * Sets data with specified source buffer, and returns this text.
-     *
-     * @param src the source buffer.
-     * @return this text.
-     * @see #setData(ByteBuffer)
-     */
-    public FullText data(final ByteBuffer src) {
-        setData(src);
-        return this;
-    }
-
-    /**
-     * Returns the value of {@code 전문구분코드} of this full text.
-     *
-     * @return the value of {@code 전문구분코드}  this full text.
-     */
-    public String getTextCode() {
-        return applySection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
-            return category.getHeadTextCode(s.getBuffer());
-        });
-    }
-
-    /**
-     * Sets the value of {@code 전문구분코드} of this full text with specified value.
-     *
-     * @param textCode new value for the {@code 전문구분코드}.
-     */
-    FullText setTextCode(final String textCode) {
-        Objects.requireNonNull(textCode, "textCode is null");
-        acceptSection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
-            category.setHeadTextCode(s.getBuffer(), textCode);
-        });
-        return this;
-    }
-
-    FullText textCode(final String textCode) {
-        setTextCode(textCode);
-        return this;
-    }
-
-    /**
-     * Returns the value of {@code 업무구분코드} of this full text.
-     *
-     * @return the value of {@code 업무구분코드} of this full text.
-     */
-    public String getTaskCode() {
-        return applySection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
-            return category.getHeadTaskCode(s.getBuffer());
-        });
-    }
-
-    /**
-     * Sets the value of {@code 업무구분코드} of this full text with specified value.
-     *
-     * @param taskCode new value for the {@code 업무구분코드}.
-     */
-    void setTaskCode(final String taskCode) {
-        Objects.requireNonNull(taskCode, "taskCode is null");
-        acceptSection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
-            category.setHeadTaskCode(s.getBuffer(), taskCode);
-        });
-    }
-
-    FullText taskCode(final String taskCode) {
-        setTaskCode(taskCode);
-        return this;
     }
 
     /**
@@ -430,29 +471,15 @@ public class FullText {
             throw new IllegalArgumentException("channel is not open");
         }
         final var data = getData();
-        FullTextUtils.writeData(channel, data.flip());
-    }
-
-    /**
-     * Reads this text's data from specified channel.
-     *
-     * @param channel the channel.
-     * @throws IOException if an I/O error occurs.
-     */
-    public void read(final ReadableByteChannel channel) throws IOException {
-        if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
-            throw new IllegalArgumentException("channel is not open");
-        }
-        final var data = FullTextUtils.readData(channel);
-        setData(data.flip());
+        FullTextUtils.sendData(channel, data.flip());
     }
 
     // ---------------------------------------------------------------------------------------------------------- length
 
     /**
-     * Returns the length of this text, in bytes.
+     * Returns the length of this text.
      *
-     * @return the length of this text, in bytes.
+     * @return the length of this text.
      */
     public int getLength() {
         return length;
@@ -461,56 +488,20 @@ public class FullText {
     // ---------------------------------------------------------------------------------------------------------- cipher
 
     /**
-     * Sets specified cipher to this text.
+     * Sets specified cipher for this text.
      *
-     * @param cipher the cipher.
+     * @param cipher cipher for this text; {@code null} to clear.
      */
-    public void setCipher(final Cipher cipher) {
+    public void setCipher(final FullTextCipher cipher) {
         this.cipher = cipher;
-    }
-
-    /**
-     * Sets specified cipher to this text, and returns this text.
-     *
-     * @param cipher the cipher.
-     * @return this text.
-     */
-    public FullText cipher(final Cipher cipher) {
-        setCipher(cipher);
-        return this;
-    }
-
-    // ------------------------------------------------------------------------------------------------------------- key
-    public void setKey(final Key key) {
-        this.key = key;
-    }
-
-    public FullText key(final Key key) {
-        setKey(key);
-        return null;
-    }
-
-    // ---------------------------------------------------------------------------------------------------------- params
-    public void setParams(final AlgorithmParameterSpec params) {
-        this.params = params;
-    }
-
-    public FullText params(final AlgorithmParameterSpec params) {
-        setParams(params);
-        return this;
     }
 
     // -----------------------------------------------------------------------------------------------------------------
     private final FullTextCategory category;
 
-    final List<? extends FullTextSection> sections;
+    private final List<? extends FullTextSection> sections;
 
     private final int length;
 
-    // -----------------------------------------------------------------------------------------------------------------
-    private transient Cipher cipher;
-
-    private transient Key key;
-
-    private transient AlgorithmParameterSpec params;
+    private transient FullTextCipher cipher;
 }

@@ -12,24 +12,16 @@ public enum FullTextCategory {
     D(FullTextConstants.SEGMENT_OFFSET_TEXT_CODE_D, FullTextConstants.SEGMENT_LENGTH_TEXT_CODE_D,
       FullTextConstants.SEGMENT_OFFSET_TASK_CODE_D, FullTextConstants.SEGMENT_LENGTH_TASK_CODE_D) { // @formatter:off
         @Override LocalDate getHeadDate(final FullTextSection headSection) {
-            try {
-                return headSection.getDate(FullTextConstants.SEGMENT_INDEX_HEAD_DATE_D);
-            } catch (final NumberFormatException nfe) {
-                return null;
-            }
+            return headSection.getDate(FullTextConstants.SEGMENT_INDEX_HEAD_DATE_D);
         }
         @Override void setHeadDate(final FullTextSection headSection, final LocalDate headDate) {
-            headSection.date_(FullTextConstants.SEGMENT_INDEX_HEAD_DATE_D, headDate);
+            headSection.setDate(FullTextConstants.SEGMENT_INDEX_HEAD_DATE_D, headDate);
         }
         @Override LocalTime getHeadTime(final FullTextSection headSection) {
-            try {
-                return headSection.getTime(FullTextConstants.SEGMENT_INDEX_HEAD_TIME_D);
-            } catch (final NumberFormatException nfe) {
-                return null;
-            }
+            return headSection.getTime(FullTextConstants.SEGMENT_INDEX_HEAD_TIME_D);
         }
         @Override void setHeadTime(final FullTextSection headSection, final LocalTime headTime) {
-            headSection.time_(FullTextConstants.SEGMENT_INDEX_HEAD_TIME_D, headTime);
+            headSection.setTime(FullTextConstants.SEGMENT_INDEX_HEAD_TIME_D, headTime);
         } // @formatter:on
     },
 
@@ -39,24 +31,16 @@ public enum FullTextCategory {
     F(FullTextConstants.SEGMENT_OFFSET_TEXT_CODE_F, FullTextConstants.SEGMENT_LENGTH_TEXT_CODE_F,
       FullTextConstants.SEGMENT_OFFSET_TASK_CODE_F, FullTextConstants.SEGMENT_LENGTH_TASK_CODE_F) { // @formatter:off
         @Override LocalDate getHeadDate(final FullTextSection headSection) {
-            try {
-                return headSection.getDate(FullTextConstants.SEGMENT_INDEX_HEAD_DATE_F);
-            } catch (final NumberFormatException nfe) {
-                return null;
-            }
+            return headSection.getDate(FullTextConstants.SEGMENT_INDEX_HEAD_DATE_F);
         }
         @Override void setHeadDate(final FullTextSection headSection, final LocalDate headDate) {
-            headSection.date_(FullTextConstants.SEGMENT_INDEX_HEAD_DATE_F, headDate);
+            headSection.setDate(FullTextConstants.SEGMENT_INDEX_HEAD_DATE_F, headDate);
         }
         @Override LocalTime getHeadTime(final FullTextSection headSection) {
-            try {
-                return headSection.getTime(FullTextConstants.SEGMENT_INDEX_HEAD_TIME_F);
-            } catch (final NumberFormatException nfe) {
-                return null;
-            }
+            return headSection.getTime(FullTextConstants.SEGMENT_INDEX_HEAD_TIME_F);
         }
         @Override void setHeadTime(final FullTextSection headSection, final LocalTime headTime) {
-            headSection.time_(FullTextConstants.SEGMENT_INDEX_HEAD_TIME_F, headTime);
+            headSection.setTime(FullTextConstants.SEGMENT_INDEX_HEAD_TIME_F, headTime);
         } // @formatter:on
     };
 

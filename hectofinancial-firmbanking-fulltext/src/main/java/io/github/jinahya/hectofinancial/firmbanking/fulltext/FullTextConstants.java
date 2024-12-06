@@ -31,7 +31,7 @@ public final class FullTextConstants {
     // -----------------------------------------------------------------------------------------------------------------
     public static final int SECTION_INDEX_HEAD = 1;
 
-    public static final int SECTION_INDEX_BODY = 2;
+    public static final int SECTION_INDEX_BODY = SECTION_INDEX_HEAD + 1;
 
     // -----------------------------------------------------------------------------------------------------------------
     private FullTextConstants() {
