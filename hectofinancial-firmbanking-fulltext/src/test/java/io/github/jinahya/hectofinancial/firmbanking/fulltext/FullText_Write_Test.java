@@ -8,7 +8,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
@@ -28,12 +27,12 @@ class FullText_Write_Test {
         final var instance = FullText.newInstance(category, textCode, taskCode);
         final var baos = new ByteArrayOutputStream();
         // -------------------------------------------------------------------------------------------------------- when
-        instance.write(Channels.newChannel(baos));
-        final var bytes = baos.toByteArray();
+        final var bytes = instance.write(baos).toByteArray();
         assertThat(bytes).isNotNull().hasSize(FullTextUtils.LENGTH_BYTES + instance.getLength());
         final var data = Arrays.copyOfRange(bytes, FullTextUtils.LENGTH_BYTES, bytes.length);
         instance.setData(ByteBuffer.wrap(data));
         // -------------------------------------------------------------------------------------------------------- then
+        assertThat(instance.getCategory()).isEqualTo(category);
         assertThat(instance.getTextCode()).isEqualTo(textCode);
         assertThat(instance.getTaskCode()).isEqualTo(taskCode);
     }
@@ -44,15 +43,15 @@ class FullText_Write_Test {
             throws IOException {
         // ------------------------------------------------------------------------------------------------------- given
         final var instance = FullText.newInstance(category, textCode, taskCode);
-        FullTextCipherTestUtils.acceptFullTextCipher(instance::setCipher);
+        FullTextCryptoTestUtils.acceptFullTextCrypto(instance::setCrypto);
         final var baos = new ByteArrayOutputStream();
         // -------------------------------------------------------------------------------------------------------- when
-        instance.write(Channels.newChannel(baos));
-        final var bytes = baos.toByteArray();
+        final var bytes = instance.write(baos).toByteArray();
         assertThat(bytes).isNotNull().hasSizeGreaterThanOrEqualTo(FullTextUtils.LENGTH_BYTES + instance.getLength());
         final var data = Arrays.copyOfRange(bytes, FullTextUtils.LENGTH_BYTES, bytes.length);
         instance.setData(ByteBuffer.wrap(data));
         // -------------------------------------------------------------------------------------------------------- then
+        assertThat(instance.getCategory()).isEqualTo(category);
         assertThat(instance.getTextCode()).isEqualTo(textCode);
         assertThat(instance.getTaskCode()).isEqualTo(taskCode);
     }

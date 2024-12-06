@@ -7,12 +7,12 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.util.Objects;
 
 /**
- * Parameters for encrypting/decrypting instances of {@link FullText}.
+ * A crypto for encrypting/decrypting instances of {@link FullText}.
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
- * @see FullText#setCipher(FullTextCipher)
+ * @see FullText#setCrypto(FullTextCrypto)
  */
-public class FullTextCipher {
+public class FullTextCrypto {
 
     // ------------------------------------------------------------------------------------------ STATIC_FACTORY_METHODS
 
@@ -24,12 +24,12 @@ public class FullTextCipher {
      * @param params a params; may be {@code null}.
      * @return a new instance.
      */
-    public static FullTextCipher newInstance(final Cipher cipher, final Key key, final AlgorithmParameterSpec params) {
-        return new FullTextCipher(cipher, key, params);
+    public static FullTextCrypto newInstance(final Cipher cipher, final Key key, final AlgorithmParameterSpec params) {
+        return new FullTextCrypto(cipher, key, params);
     }
 
     // ---------------------------------------------------------------------------------------------------- CONSTRUCTORS
-    private FullTextCipher(final Cipher cipher, final Key key, final AlgorithmParameterSpec params) {
+    private FullTextCrypto(final Cipher cipher, final Key key, final AlgorithmParameterSpec params) {
         super();
         this.cipher = Objects.requireNonNull(cipher, "cipher is null");
         this.key = Objects.requireNonNull(key, "key is null");

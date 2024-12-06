@@ -1,7 +1,10 @@
 package io.github.jinahya.hectofinancial.firmbanking.fulltext;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.time.LocalDate;
@@ -21,7 +24,10 @@ import java.util.stream.Collectors;
  * @see <a href="https://develop.sbsvc.online/27/onlineDocList.do">실시간펌뱅킹</a>
  * @see <a href="https://develop.sbsvc.online/31/onlineDocList.do">실시간펌뱅킹(외화)</a>
  * @see #newInstance(FullTextCategory, String, String)
- * @see #readInstance(FullTextCategory, ReadableByteChannel, FullTextCipher)
+ * @see #readInstance(FullTextCategory, ReadableByteChannel, FullTextCrypto)
+ * @see #readInstance(FullTextCategory, InputStream, FullTextCrypto)
+ * @see FullTextSegment
+ * @see FullTextCrypto
  */
 public class FullText {
 
@@ -54,25 +60,43 @@ public class FullText {
      *
      * @param category a category of the {@code 전문}.
      * @param channel  the channel.
-     * @param cipher   a cipher; may be {@code null}.
+     * @param crypto   a crypto; may be {@code null}.
      * @return a new instance.
      * @throws IOException if an I/O error occurs.
+     * @see #readInstance(FullTextCategory, InputStream, FullTextCrypto)
      */
     public static FullText readInstance(final FullTextCategory category, final ReadableByteChannel channel,
-                                        final FullTextCipher cipher)
+                                        final FullTextCrypto crypto)
             throws IOException {
         Objects.requireNonNull(category, "category is null");
         Objects.requireNonNull(channel, "channel is null");
         var data = FullTextUtils.receiveData(channel);
-        if (cipher != null) {
-            data = cipher.decrypt(data.flip());
+        if (crypto != null) {
+            data = crypto.decrypt(data.flip());
         }
         final var textCode = category.getHeadTextCode(data);
         final var taskCode = category.getHeadTaskCode(data);
         final var instance = newInstance(category, textCode, taskCode);
-        instance.setCipher(cipher);
+        instance.setCrypto(crypto);
         instance.setRawData(data.flip());
         return instance;
+    }
+
+    /**
+     * Reads an instance from specified stream.
+     *
+     * @param category a category of the {@code 전문}.
+     * @param stream   the stream.
+     * @param crypto   a crypto; may be {@code null}.
+     * @return a new instance.
+     * @throws IOException if an I/O error occurs.
+     * @see #readInstance(FullTextCategory, ReadableByteChannel, FullTextCrypto)
+     */
+    public static FullText readInstance(final FullTextCategory category, final InputStream stream,
+                                        final FullTextCrypto crypto)
+            throws IOException {
+        Objects.requireNonNull(stream, "stream is null");
+        return readInstance(category, Channels.newChannel(stream), crypto);
     }
 
     // ---------------------------------------------------------------------------------------------------- CONSTRUCTORS
@@ -431,7 +455,7 @@ public class FullText {
     }
 
     /**
-     * Returns a byte buffer of this text's data, while encrypting when {@link #setCipher(FullTextCipher) cipher} is
+     * Returns a byte buffer of this text's data, while encrypting when {@link #setCrypto(FullTextCrypto) crypto} is
      * set.
      *
      * @return a byte buffer of data copied.
@@ -439,15 +463,15 @@ public class FullText {
      */
     public ByteBuffer getData() {
         final var data = getRawData();
-        if (cipher != null) {
-            return cipher.encrypt(data.flip());
+        if (crypto != null) {
+            return crypto.encrypt(data.flip());
         }
         return data;
     }
 
     /**
      * Sets data with specified buffer's remaining bytes, while decrypting when
-     * {@link #setCipher(FullTextCipher) cipher} set.
+     * {@link #setCrypto(FullTextCrypto) crypto} set.
      *
      * @param src the source buffer.
      * @see #getData()
@@ -456,8 +480,8 @@ public class FullText {
         if (Objects.requireNonNull(src, "src is null").remaining() < length) {
             throw new IllegalArgumentException("src.remaining(" + src.remaining() + ") < length(" + length + ")");
         }
-        if (cipher != null) {
-            final var decrypted = cipher.decrypt(src);
+        if (crypto != null) {
+            final var decrypted = crypto.decrypt(src);
             setRawData(decrypted.flip());
             return;
         }
@@ -468,14 +492,33 @@ public class FullText {
      * Writes this text's data to specified channel.
      *
      * @param channel the channel.
+     * @param <T>     channel type parameter
+     * @return given {@code channel}.
      * @throws IOException if an I/O error occurs.
+     * @see #write(OutputStream)
      */
-    public void write(final WritableByteChannel channel) throws IOException {
+    public <T extends WritableByteChannel> T write(final T channel) throws IOException {
         if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
             throw new IllegalArgumentException("channel is not open");
         }
         final var data = getData();
         FullTextUtils.sendData(channel, data.flip());
+        return channel;
+    }
+
+    /**
+     * Writes this text's data to specified stream.
+     *
+     * @param stream the stream.
+     * @param <T>    stream type parameter
+     * @return given {@code stream}.
+     * @throws IOException if an I/O error occurs.
+     * @see #write(WritableByteChannel)
+     */
+    public <T extends OutputStream> T write(final T stream) throws IOException {
+        Objects.requireNonNull(stream, "stream is null");
+        write(Channels.newChannel(stream));
+        return stream;
     }
 
     // ---------------------------------------------------------------------------------------------------------- length
@@ -489,15 +532,15 @@ public class FullText {
         return length;
     }
 
-    // ---------------------------------------------------------------------------------------------------------- cipher
+    // ---------------------------------------------------------------------------------------------------------- crypto
 
     /**
-     * Sets specified cipher for this text.
+     * Sets specified crypto for this text.
      *
-     * @param cipher cipher for this text; {@code null} to clear.
+     * @param crypto crypto for this text; {@code null} to clear.
      */
-    public void setCipher(final FullTextCipher cipher) {
-        this.cipher = cipher;
+    public void setCrypto(final FullTextCrypto crypto) {
+        this.crypto = crypto;
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -507,5 +550,5 @@ public class FullText {
 
     private final int length;
 
-    private transient FullTextCipher cipher;
+    private transient FullTextCrypto crypto;
 }

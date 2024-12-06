@@ -63,7 +63,7 @@ class FullTextTest {
         final var instance = FullTextTestUtils.loadFullText(category, textCode, taskCode);
         // -------------------------------------------------------------------------------------------------------- when
         FullTextTestUtils.acceptCipherKeyAndParams(c -> k -> p -> {
-            instance.setCipher(FullTextCipher.newInstance(c, k, p));
+            instance.setCrypto(FullTextCrypto.newInstance(c, k, p));
             final var baos = new ByteArrayOutputStream();
             try {
                 instance.write(Channels.newChannel(baos));
