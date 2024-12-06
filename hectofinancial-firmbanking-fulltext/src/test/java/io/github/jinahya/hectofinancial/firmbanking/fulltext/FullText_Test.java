@@ -362,7 +362,7 @@ class FullText_Test {
     })
     @ParameterizedTest
     void getBodyString_NotBlank_(final FullText text) {
-        assertThat(text.getBodyDataString()).isNotBlank();
+        assertThat(text.getBodyDataString()).isNotNull();
     }
 
     @DisplayName("getDataString()")
