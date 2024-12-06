@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("newHeadInstance(category)")
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 @Slf4j
-class FullTextCategoryTest {
+class FullTextCategory_Test {
 
     @EnumSource(FullTextCategory.class)
     @ParameterizedTest

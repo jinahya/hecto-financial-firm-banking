@@ -18,7 +18,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
-final class FullTextTestUtils {
+final class FullText_TestUtils {
 
     static Stream<Arguments> getCategoryTextCodeAndTaskCodeArgumentsStream() {
         return Stream.of(
@@ -33,7 +33,7 @@ final class FullTextTestUtils {
 
     static byte[] loadFullTextData(final FullTextCategory category, final String textCode, final String taskCode) {
         final var name = getResourceNameForFullText(category, textCode, taskCode);
-        try (var resource = FullTextTestUtils.class.getResourceAsStream(name)) {
+        try (var resource = FullText_TestUtils.class.getResourceAsStream(name)) {
             assertThat(resource)
                     .as("resource for '%1$s'", name)
                     .isNotNull();
@@ -89,7 +89,7 @@ final class FullTextTestUtils {
         });
     }
 
-    private FullTextTestUtils() {
+    private FullText_TestUtils() {
         throw new AssertionError("instantiation is not allowed");
     }
 }

@@ -16,17 +16,17 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @Slf4j
-class FullTextSectionTest {
+class FullTextSection_Test {
 
     private static Stream<Arguments> getCategoryAndHeadSectionArgumentsStream() {
-        return FullTextSectionTestUtils.getCategoryAndHeadSectionArgumentsStream();
+        return FullTextSection_TestUtils.getCategoryAndHeadSectionArgumentsStream();
     }
 
     @Nested
     class GetDateTest {
 
         private static Stream<Arguments> getCategoryAndHeadSectionArgumentsStream() {
-            return FullTextSectionTest.getCategoryAndHeadSectionArgumentsStream();
+            return FullTextSection_Test.getCategoryAndHeadSectionArgumentsStream();
         }
 
         @MethodSource({"getCategoryAndHeadSectionArgumentsStream"})
@@ -42,7 +42,7 @@ class FullTextSectionTest {
     class SetDateTest {
 
         private static Stream<Arguments> getCategoryAndHeadSectionArgumentsStream() {
-            return FullTextSectionTest.getCategoryAndHeadSectionArgumentsStream();
+            return FullTextSection_Test.getCategoryAndHeadSectionArgumentsStream();
         }
 
         @MethodSource({"getCategoryAndHeadSectionArgumentsStream"})

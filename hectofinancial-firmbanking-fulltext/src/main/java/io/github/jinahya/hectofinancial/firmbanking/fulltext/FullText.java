@@ -392,7 +392,7 @@ public class FullText {
      * @see FullTextConstants#SECTION_INDEX_HEAD
      * @see #setHeadDateTime(LocalDateTime)
      */
-    public void setHeadDateTimeAsNow() {
+    public void setHeadDateTimeWithNow() {
         setHeadDateTime(LocalDateTime.now());
     }
 

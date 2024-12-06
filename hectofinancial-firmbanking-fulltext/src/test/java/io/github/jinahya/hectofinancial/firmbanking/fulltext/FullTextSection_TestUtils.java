@@ -7,14 +7,14 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 
 @Slf4j
-final class FullTextSectionTestUtils {
+final class FullTextSection_TestUtils {
 
     static Stream<Arguments> getCategoryAndHeadSectionArgumentsStream() {
         return Arrays.stream(FullTextCategory.values())
                 .map(c -> Arguments.of(c, FullTextSection.newHeadInstance(c)));
     }
 
-    private FullTextSectionTestUtils() {
+    private FullTextSection_TestUtils() {
         throw new AssertionError("instantiation is not allowed");
     }
 }

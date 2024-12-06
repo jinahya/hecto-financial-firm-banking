@@ -18,7 +18,7 @@ class FullText_D1000_500_Test {
     @Test
     void __() {
         // ------------------------------------------------------------------------------------------------------- given
-        final var instance = FullTextTestUtils.loadFullText(FullTextCategory.D, "1000", "500");
+        final var instance = FullText_TestUtils.loadFullText(FullTextCategory.D, "1000", "500");
         final var textNumber = ThreadLocalRandom.current().nextInt(950000) + 1;
         // -------------------------------------------------------------------------------------------------------- when
         instance.acceptHeadSection(s -> {
