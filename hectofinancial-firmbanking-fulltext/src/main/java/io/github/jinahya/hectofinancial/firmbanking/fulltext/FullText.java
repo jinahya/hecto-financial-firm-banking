@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  * @see #newInstance(FullTextCategory, String, String)
  * @see #readInstance(FullTextCategory, ReadableByteChannel, FullTextCrypto)
  * @see #readInstance(FullTextCategory, InputStream, FullTextCrypto)
- * @see FullTextSegment
+ * @see FullTextSection
  * @see FullTextCrypto
  */
 public class FullText {
@@ -70,7 +70,7 @@ public class FullText {
             throws IOException {
         Objects.requireNonNull(category, "category is null");
         Objects.requireNonNull(channel, "channel is null");
-        var data = FullTextUtils.receiveData(channel);
+        var data = FullTextUtils.readData(channel);
         if (crypto != null) {
             data = crypto.decrypt(data.flip());
         }
@@ -502,7 +502,7 @@ public class FullText {
             throw new IllegalArgumentException("channel is not open");
         }
         final var data = getData();
-        FullTextUtils.sendData(channel, data.flip());
+        FullTextUtils.writeData(channel, data.flip());
         return channel;
     }
 

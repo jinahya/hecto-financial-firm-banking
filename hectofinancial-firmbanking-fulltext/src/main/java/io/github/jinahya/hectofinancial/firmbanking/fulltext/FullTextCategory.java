@@ -69,21 +69,21 @@ public enum FullTextCategory {
     abstract void setHeadTime(final FullTextSection headSection, final LocalTime headTime);
 
     // --------------------------------------------------------------------------------------------- headTextCodeSegment
-    String getHeadTextCode(final ByteBuffer data) {
-        return headTextCodeSegment.getValue(data);
+    String getHeadTextCode(final ByteBuffer headData) {
+        return headTextCodeSegment.getValue(headData);
     }
 
-    void setHeadTextCode(final ByteBuffer data, final String textCode) {
-        headTextCodeSegment.setValue(data, textCode);
+    void setHeadTextCode(final ByteBuffer headData, final String textCode) {
+        headTextCodeSegment.setValue(headData, textCode);
     }
 
     // --------------------------------------------------------------------------------------------- headTaskCodeSegment
-    String getHeadTaskCode(final ByteBuffer data) {
-        return headTaskCodeSegment.getValue(data);
+    String getHeadTaskCode(final ByteBuffer headData) {
+        return headTaskCodeSegment.getValue(headData);
     }
 
-    void setHeadTaskCode(final ByteBuffer data, final String taskCode) {
-        headTaskCodeSegment.setValue(data, taskCode);
+    void setHeadTaskCode(final ByteBuffer headData, final String taskCode) {
+        headTaskCodeSegment.setValue(headData, taskCode);
     }
 
     // -----------------------------------------------------------------------------------------------------------------

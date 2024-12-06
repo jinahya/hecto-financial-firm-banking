@@ -22,10 +22,11 @@ class FullTextSection_NewBodyInstance_Test {
                 Arguments.of(FullTextCategory.D, "1000", "100"),
                 Arguments.of(FullTextCategory.D, "1000", "200"),
                 Arguments.of(FullTextCategory.D, "1000", "500"),
-                Arguments.of(FullTextCategory.D, "2000", "100"),
+                Arguments.of(FullTextCategory.D, "2000", "100"), // 2-1. 이체 처리 당 타행 (2000/100, 2100/100) 지급
                 Arguments.of(FullTextCategory.D, "2000", "200"),
                 Arguments.of(FullTextCategory.D, "2000", "550"),
                 Arguments.of(FullTextCategory.D, "2000", "650"),
+                Arguments.of(FullTextCategory.D, "6000", "100"), // 3-1. 계좌성명조회(이체예비거래) (6000/100, 6100/100)
                 Arguments.of(FullTextCategory.D, "7000", "100"),
                 Arguments.of(FullTextCategory.D, "7000", "200")
         );

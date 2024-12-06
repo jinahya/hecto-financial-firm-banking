@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 @Slf4j
-final class FullTextCryptoTestUtils {
+final class FullTextCrypto_TestUtils {
 
     static <R> R applyCipherKeyAndParams(
             final Function<? super Cipher,
@@ -60,7 +60,7 @@ final class FullTextCryptoTestUtils {
         });
     }
 
-    private FullTextCryptoTestUtils() {
+    private FullTextCrypto_TestUtils() {
         throw new AssertionError("instantiation is not allowed");
     }
 }

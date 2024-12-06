@@ -43,7 +43,7 @@ class FullText_Write_Test {
             throws IOException {
         // ------------------------------------------------------------------------------------------------------- given
         final var instance = FullText.newInstance(category, textCode, taskCode);
-        FullTextCryptoTestUtils.acceptFullTextCrypto(instance::setCrypto);
+        FullTextCrypto_TestUtils.acceptFullTextCrypto(instance::setCrypto);
         final var baos = new ByteArrayOutputStream();
         // -------------------------------------------------------------------------------------------------------- when
         final var bytes = instance.write(baos).toByteArray();

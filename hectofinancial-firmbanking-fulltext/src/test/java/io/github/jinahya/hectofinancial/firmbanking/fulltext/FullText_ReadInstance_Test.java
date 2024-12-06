@@ -8,7 +8,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.channels.Channels;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,7 +31,7 @@ class FullText_ReadInstance_Test {
         }
         final var instance = FullText.readInstance(
                 category,
-                Channels.newChannel(new ByteArrayInputStream(bytes)),
+                new ByteArrayInputStream(bytes),
                 null
         );
         assertThat(instance.getCategory()).isSameAs(category);
@@ -44,7 +43,7 @@ class FullText_ReadInstance_Test {
     @ParameterizedTest
     void __secure(final FullTextCategory category, final String textCode, final String taskCode)
             throws IOException {
-        final var security = FullTextCryptoTestUtils.applyCipherKeyAndParams(
+        final var security = FullTextCrypto_TestUtils.applyCipherKeyAndParams(
                 c -> k -> p -> FullTextCrypto.newInstance(c, k, p)
         );
         final byte[] bytes;
@@ -56,7 +55,7 @@ class FullText_ReadInstance_Test {
         }
         final var instance = FullText.readInstance(
                 category,
-                Channels.newChannel(new ByteArrayInputStream(bytes)),
+                new ByteArrayInputStream(bytes),
                 security
         );
         assertThat(instance.getCategory()).isSameAs(category);

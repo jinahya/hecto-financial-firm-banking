@@ -7,10 +7,16 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.util.concurrent.ThreadLocalRandom;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -19,9 +25,39 @@ import static org.mockito.Mockito.mock;
 @Slf4j
 class FullTextUtils_Test {
 
-    @DisplayName("sendData(channel, data)")
+    @DisplayName("readLength(channel)")
     @Nested
-    class SendDataTest {
+    class ReadLengthTest {
+
+        @Test
+        void readLength() throws IOException {
+            final var expected = ThreadLocalRandom.current().nextInt(2048) + 1;
+            final var bytes = FullTextSegmentCodec.of9().encode(expected, FullTextUtils.LENGTH_BYTES);
+            final var channel = Channels.newChannel(new ByteArrayInputStream(bytes));
+            final var actual = FullTextUtils.readLength(channel);
+            assertThat(actual).isEqualTo(expected);
+        }
+    }
+
+    @DisplayName("writeLength(channel, length)")
+    @Nested
+    class WriteLengthTest {
+
+        @Test
+        void readLength() throws IOException {
+            final var expected = ThreadLocalRandom.current().nextInt(2048) + 1;
+            final var baos = new ByteArrayOutputStream();
+            final var channel = Channels.newChannel(baos);
+            FullTextUtils.writeLength(channel, expected);
+            final var bytes = baos.toByteArray();
+            final var actual = FullTextSegmentCodec.of9().decode(bytes);
+            assertThat(actual).isEqualTo(expected);
+        }
+    }
+
+    @DisplayName("writeData(channel, data)")
+    @Nested
+    class WriteDataTest {
 
         @Test
         void _NullPointerException_ChannelIsNull() {
@@ -29,7 +65,7 @@ class FullTextUtils_Test {
             final var data = ByteBuffer.allocate(0);
             // ----------------------------------------------------------------------------------------------- when/then
             assertThatThrownBy(() -> {
-                FullTextUtils.sendData(null, data);
+                FullTextUtils.writeData(null, data);
             }).isInstanceOf(NullPointerException.class);
         }
 
@@ -41,21 +77,21 @@ class FullTextUtils_Test {
             final var data = ByteBuffer.allocate(0);
             // ----------------------------------------------------------------------------------------------- when/then
             assertThatThrownBy(() -> {
-                FullTextUtils.sendData(channel, data);
+                FullTextUtils.writeData(channel, data);
             }).isInstanceOf(IllegalArgumentException.class);
         }
     }
 
-    @DisplayName("receiveData(channel)")
+    @DisplayName("readData(channel)")
     @Nested
-    class ReceiveDataTest {
+    class ReadDataTest {
 
         @Test
         void _NullPointerException_ChannelIsNull() {
             // --------------------------------------------------------------------------------------------------- given
             // ----------------------------------------------------------------------------------------------- when/then
             assertThatThrownBy(() -> {
-                FullTextUtils.receiveData(null);
+                FullTextUtils.readData(null);
             }).isInstanceOf(NullPointerException.class);
         }
 
@@ -66,7 +102,7 @@ class FullTextUtils_Test {
             given(channel.isOpen()).willReturn(false);
             // ----------------------------------------------------------------------------------------------- when/then
             assertThatThrownBy(() -> {
-                FullTextUtils.receiveData(channel);
+                FullTextUtils.readData(channel);
             }).isInstanceOf(IllegalArgumentException.class);
         }
     }

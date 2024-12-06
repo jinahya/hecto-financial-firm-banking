@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class FullTextSegmentCodec$Test<C extends FullTextSegmentCodec<V>, V> {
