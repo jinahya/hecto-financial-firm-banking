@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  * @see <a href="https://develop.sbsvc.online/27/onlineDocList.do">실시간펌뱅킹</a>
  * @see <a href="https://develop.sbsvc.online/31/onlineDocList.do">실시간펌뱅킹(외화)</a>
  * @see #newInstance(FullTextCategory, String, String)
- * @see #readInstance(FullTextCategory, ReadableByteChannel, FullTextSecurity)
+ * @see #readInstance(FullTextCategory, ReadableByteChannel, FullTextCipher)
  */
 public class FullText {
 
@@ -54,23 +54,23 @@ public class FullText {
      *
      * @param category a category of the {@code 전문}.
      * @param channel  the channel.
-     * @param security a security; may be {@code null}.
+     * @param cipher   a cipher; may be {@code null}.
      * @return a new instance.
      * @throws IOException if an I/O error occurs.
      */
     public static FullText readInstance(final FullTextCategory category, final ReadableByteChannel channel,
-                                        final FullTextSecurity security)
+                                        final FullTextCipher cipher)
             throws IOException {
         Objects.requireNonNull(category, "category is null");
         Objects.requireNonNull(channel, "channel is null");
         var data = FullTextUtils.receiveData(channel);
-        if (security != null) {
-            data = security.decrypt(data.flip());
+        if (cipher != null) {
+            data = cipher.decrypt(data.flip());
         }
         final var textCode = category.getHeadTextCode(data);
         final var taskCode = category.getHeadTaskCode(data);
         final var instance = newInstance(category, textCode, taskCode);
-        instance.setSecurity(security);
+        instance.setCipher(cipher);
         instance.setRawData(data.flip());
         return instance;
     }
@@ -281,7 +281,7 @@ public class FullText {
     }
 
     /**
-     * Returns {@code 전송일자} from the {@link FullTextConstants#SECTION_INDEX_HEAD head} section.
+     * Returns {@code 전송일자} from the {@link FullTextConstants#SECTION_INDEX_HEAD head} section of this text.
      *
      * @return the value of {@code 전송일자} segment.
      * @see FullTextConstants#SECTION_INDEX_HEAD
@@ -292,7 +292,8 @@ public class FullText {
     }
 
     /**
-     * Sets {@code 전송일자} to the {@link FullTextConstants#SECTION_INDEX_HEAD head} section, with specified value.
+     * Sets {@code 전송일자} to the {@link FullTextConstants#SECTION_INDEX_HEAD head} section of this text, with specified
+     * value.
      *
      * @param headDate new value for the {@code 전송일자} segment.
      * @see FullTextConstants#SECTION_INDEX_HEAD
@@ -303,7 +304,7 @@ public class FullText {
     }
 
     /**
-     * Returns {@code 전송시간} from the {@link FullTextConstants#SECTION_INDEX_HEAD head} section.
+     * Returns {@code 전송시간} from the {@link FullTextConstants#SECTION_INDEX_HEAD head} section of this text.
      *
      * @return the value of {@code 전송시간} segment.
      * @see FullTextConstants#SECTION_INDEX_HEAD
@@ -314,7 +315,8 @@ public class FullText {
     }
 
     /**
-     * Sets {@code 전송시간} from the {@link FullTextConstants#SECTION_INDEX_HEAD head} section, with specified value.
+     * Sets {@code 전송시간} from the {@link FullTextConstants#SECTION_INDEX_HEAD head} section of this text, with specified
+     * value.
      *
      * @param headTime new value for the {@code 전송시간} segment.
      * @see FullTextConstants#SECTION_INDEX_HEAD
@@ -325,7 +327,7 @@ public class FullText {
     }
 
     /**
-     * Returns {@code 전송일시} from the {@link FullTextConstants#SECTION_INDEX_HEAD head} section.
+     * Returns {@code 전송일시} from the {@link FullTextConstants#SECTION_INDEX_HEAD head} section of this text.
      *
      * @return the value of {@code 전송일시}; {@code null} when either {@link #getHeadDate() 전송일자} or
      * {@link #getHeadTime() 전송시간} is {@code null}.
@@ -341,7 +343,8 @@ public class FullText {
     }
 
     /**
-     * Sets {@code 전송일시} to the {@link FullTextConstants#SECTION_INDEX_HEAD head} section, with specified value.
+     * Sets {@code 전송일시} to the {@link FullTextConstants#SECTION_INDEX_HEAD head} section of this text, with specified
+     * value.
      *
      * @param headDateTime new value for the {@code 전송일자/전송시간} segment.
      * @see FullTextConstants#SECTION_INDEX_HEAD
@@ -355,7 +358,7 @@ public class FullText {
     }
 
     /**
-     * Sets {@code 전송일시} to the {@link FullTextConstants#SECTION_INDEX_HEAD head} section, with
+     * Sets {@code 전송일시} to the {@link FullTextConstants#SECTION_INDEX_HEAD head} section of this text, with
      * {@link LocalDateTime#now() now}.
      *
      * @see FullTextConstants#SECTION_INDEX_HEAD
@@ -366,27 +369,27 @@ public class FullText {
     }
 
     /**
-     * Returns a string representation of the {@link FullTextConstants#SECTION_INDEX_HEAD head} section.
+     * Returns a string representation of the {@link FullTextConstants#SECTION_INDEX_HEAD head} section of this text.
      *
-     * @return a string representation of the {@link FullTextConstants#SECTION_INDEX_HEAD head} section.
+     * @return a string representation of the {@link FullTextConstants#SECTION_INDEX_HEAD head} section of this text.
      */
     public String getHeadDataString() {
         return applyHeadSection(FullTextSection::getDataString);
     }
 
     /**
-     * Returns a string representation of the {@link FullTextConstants#SECTION_INDEX_BODY body} section.
+     * Returns a string representation of the {@link FullTextConstants#SECTION_INDEX_BODY body} section of this text.
      *
-     * @return a string representation of the {@link FullTextConstants#SECTION_INDEX_BODY body} section.
+     * @return a string representation of the {@link FullTextConstants#SECTION_INDEX_BODY body} section of this text.
      */
     public String getBodyDataString() {
         return applyBodySection(FullTextSection::getDataString);
     }
 
     /**
-     * Returns a string representation of the internal data buffer.
+     * Returns a string representation of this text's data.
      *
-     * @return a string representation of the internal data buffer
+     * @return a string representation of this text's data.
      */
     public String getDataString() {
         return sections.stream()
@@ -395,21 +398,21 @@ public class FullText {
     }
 
     /**
-     * Returns a byte buffer of all sections' data.
+     * Returns a byte buffer of this text's raw(unencrypted) data.
      *
-     * @return a byte buffer of all sections' data with zero {@code remaining}.
+     * @return a byte buffer of this text's raw(unencrypted) data.
      * @see #setRawData(ByteBuffer)
      */
-    public ByteBuffer getRawData() {
+    private ByteBuffer getRawData() {
         final var dst = ByteBuffer.allocate(length);
         sections.forEach(s -> s.getData(dst));
         return dst;
     }
 
     /**
-     * Sets specified buffer's content to this text.
+     * Sets specified buffer of raw(unencrypted) data to this text.
      *
-     * @param src the buffer whose {@link ByteBuffer#remaining() remaining} should be equal to
+     * @param src the buffer of war(unencrypted) data, whose {@link ByteBuffer#remaining() remaining} should be equal to
      *            {@link #getLength() length} of this text.
      * @see #getRawData()
      */
@@ -424,23 +427,23 @@ public class FullText {
     }
 
     /**
-     * Returns a byte buffer of this text's data, while encrypting when {@link #setSecurity(FullTextSecurity) security}
-     * is set.
+     * Returns a byte buffer of this text's data, while encrypting when {@link #setCipher(FullTextCipher) cipher} is
+     * set.
      *
      * @return a byte buffer of data copied.
      * @see #setData(ByteBuffer)
      */
     public ByteBuffer getData() {
         final var data = getRawData();
-        if (security != null) {
-            return security.encrypt(data.flip());
+        if (cipher != null) {
+            return cipher.encrypt(data.flip());
         }
         return data;
     }
 
     /**
      * Sets data with specified buffer's remaining bytes, while decrypting when
-     * {@link #setSecurity(FullTextSecurity) security} set.
+     * {@link #setCipher(FullTextCipher) cipher} set.
      *
      * @param src the source buffer.
      * @see #getData()
@@ -449,8 +452,8 @@ public class FullText {
         if (Objects.requireNonNull(src, "src is null").remaining() < length) {
             throw new IllegalArgumentException("src.remaining(" + src.remaining() + ") < length(" + length + ")");
         }
-        if (security != null) {
-            final var decrypted = security.decrypt(src);
+        if (cipher != null) {
+            final var decrypted = cipher.decrypt(src);
             setRawData(decrypted.flip());
             return;
         }
@@ -482,15 +485,15 @@ public class FullText {
         return length;
     }
 
-    // -------------------------------------------------------------------------------------------------------- security
+    // ---------------------------------------------------------------------------------------------------------- cipher
 
     /**
-     * Sets specified security for this text.
+     * Sets specified cipher for this text.
      *
-     * @param security security for this text; {@code null} to clear.
+     * @param cipher cipher for this text; {@code null} to clear.
      */
-    public void setSecurity(final FullTextSecurity security) {
-        this.security = security;
+    public void setCipher(final FullTextCipher cipher) {
+        this.cipher = cipher;
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -500,5 +503,5 @@ public class FullText {
 
     private final int length;
 
-    private transient FullTextSecurity security;
+    private transient FullTextCipher cipher;
 }

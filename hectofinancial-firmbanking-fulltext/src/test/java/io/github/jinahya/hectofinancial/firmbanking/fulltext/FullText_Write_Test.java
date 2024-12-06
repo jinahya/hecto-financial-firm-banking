@@ -24,26 +24,35 @@ class FullText_Write_Test {
     @MethodSource({"getTextCategoryTextCodeAndTaskCodeArgumentsStream"})
     @ParameterizedTest
     void __(final FullTextCategory category, final String textCode, final String taskCode) throws IOException {
+        // ------------------------------------------------------------------------------------------------------- given
         final var instance = FullText.newInstance(category, textCode, taskCode);
         final var baos = new ByteArrayOutputStream();
+        // -------------------------------------------------------------------------------------------------------- when
         instance.write(Channels.newChannel(baos));
         final var bytes = baos.toByteArray();
-        instance.setData(ByteBuffer.wrap(Arrays.copyOfRange(bytes, FullTextUtils.LENGTH_BYTES, bytes.length)));
+        assertThat(bytes).isNotNull().hasSize(FullTextUtils.LENGTH_BYTES + instance.getLength());
+        final var data = Arrays.copyOfRange(bytes, FullTextUtils.LENGTH_BYTES, bytes.length);
+        instance.setData(ByteBuffer.wrap(data));
+        // -------------------------------------------------------------------------------------------------------- then
         assertThat(instance.getTextCode()).isEqualTo(textCode);
         assertThat(instance.getTaskCode()).isEqualTo(taskCode);
     }
 
     @MethodSource({"getTextCategoryTextCodeAndTaskCodeArgumentsStream"})
     @ParameterizedTest
-    void __WithSecurity(final FullTextCategory category, final String textCode, final String taskCode) throws IOException {
+    void __WithSecurity(final FullTextCategory category, final String textCode, final String taskCode)
+            throws IOException {
+        // ------------------------------------------------------------------------------------------------------- given
         final var instance = FullText.newInstance(category, textCode, taskCode);
-        FullTextSecurityTestUtils.acceptCipherKeyAndParams(c -> k -> p -> {
-            instance.setSecurity(FullTextSecurity.newInstance(c, k, p));
-        });
+        FullTextCipherTestUtils.acceptFullTextCipher(instance::setCipher);
         final var baos = new ByteArrayOutputStream();
+        // -------------------------------------------------------------------------------------------------------- when
         instance.write(Channels.newChannel(baos));
         final var bytes = baos.toByteArray();
-        instance.setData(ByteBuffer.wrap(Arrays.copyOfRange(bytes, FullTextUtils.LENGTH_BYTES, bytes.length)));
+        assertThat(bytes).isNotNull().hasSizeGreaterThanOrEqualTo(FullTextUtils.LENGTH_BYTES + instance.getLength());
+        final var data = Arrays.copyOfRange(bytes, FullTextUtils.LENGTH_BYTES, bytes.length);
+        instance.setData(ByteBuffer.wrap(data));
+        // -------------------------------------------------------------------------------------------------------- then
         assertThat(instance.getTextCode()).isEqualTo(textCode);
         assertThat(instance.getTaskCode()).isEqualTo(taskCode);
     }

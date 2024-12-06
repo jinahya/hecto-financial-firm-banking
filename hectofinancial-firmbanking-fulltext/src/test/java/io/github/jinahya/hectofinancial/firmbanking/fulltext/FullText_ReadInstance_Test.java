@@ -37,10 +37,10 @@ class FullText_ReadInstance_Test {
     void __secure(final FullTextCategory category, final String textCode, final String taskCode)
             throws IOException {
         final var instance1 = FullText.newInstance(category, textCode, taskCode);
-        final var security = FullTextSecurityTestUtils.applyCipherKeyAndParams(
-                c -> k -> p -> FullTextSecurity.newInstance(c, k, p)
+        final var security = FullTextCipherTestUtils.applyCipherKeyAndParams(
+                c -> k -> p -> FullTextCipher.newInstance(c, k, p)
         );
-        instance1.setSecurity(security);
+        instance1.setCipher(security);
         final var baos = new ByteArrayOutputStream();
         instance1.write(Channels.newChannel(baos));
         final var instance2 = FullText.readInstance(

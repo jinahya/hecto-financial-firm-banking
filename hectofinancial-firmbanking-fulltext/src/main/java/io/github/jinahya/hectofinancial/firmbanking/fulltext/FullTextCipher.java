@@ -7,49 +7,60 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.util.Objects;
 
 /**
- * Parameters for encrypting/decrypting instance of {@link FullText}.
+ * Parameters for encrypting/decrypting instances of {@link FullText}.
  *
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
- * @see FullText#setSecurity(FullTextSecurity)
+ * @see FullText#setCipher(FullTextCipher)
  */
-public final class FullTextSecurity {
+public class FullTextCipher {
+
+    // ------------------------------------------------------------------------------------------ STATIC_FACTORY_METHODS
 
     /**
      * Creates new instance with specified arguments.
      *
      * @param cipher a cipher.
      * @param key    a key.
-     * @param params a params.
+     * @param params a params; may be {@code null}.
      * @return a new instance.
      */
-    public static FullTextSecurity newInstance(final Cipher cipher, final Key key,
-                                               final AlgorithmParameterSpec params) {
-        return new FullTextSecurity(cipher, key, params);
+    public static FullTextCipher newInstance(final Cipher cipher, final Key key, final AlgorithmParameterSpec params) {
+        return new FullTextCipher(cipher, key, params);
     }
 
-    private FullTextSecurity(final Cipher cipher, final Key key, final AlgorithmParameterSpec params) {
+    // ---------------------------------------------------------------------------------------------------- CONSTRUCTORS
+    private FullTextCipher(final Cipher cipher, final Key key, final AlgorithmParameterSpec params) {
         super();
         this.cipher = Objects.requireNonNull(cipher, "cipher is null");
         this.key = Objects.requireNonNull(key, "key is null");
         this.params = params;
     }
 
-    void init(final int opmode) {
+    // -----------------------------------------------------------------------------------------------------------------
+    private void init(final int opmode) {
         if (params != null) {
             try {
                 cipher.init(opmode, key, params);
-            } catch (final Exception e) {
-                throw new RuntimeException("failed to initialize the cipher", e);
-            }
-        } else {
-            try {
-                cipher.init(opmode, key);
+                return;
             } catch (final Exception e) {
                 throw new RuntimeException("failed to initialize the cipher", e);
             }
         }
+        try {
+            cipher.init(opmode, key);
+        } catch (final Exception e) {
+            throw new RuntimeException("failed to initialize the cipher", e);
+        }
     }
 
+    /**
+     * Encrypts specified buffer's remaining bytes, and returns a byte buffer of encrypted bytes.
+     *
+     * @param input the buffer whose remaining bytes are encrypted.
+     * @return a byte buffer of encrypted bytes.
+     * @apiNote the result buffer will have no remaining, which means the caller should invoke {@link ByteBuffer#flip()}
+     * ont the result.
+     */
     ByteBuffer encrypt(final ByteBuffer input) {
         assert input != null;
         init(Cipher.ENCRYPT_MODE);
@@ -63,6 +74,14 @@ public final class FullTextSecurity {
         return output;
     }
 
+    /**
+     * Decrypts specified buffer's remaining bytes, and returns a byte buffer of decrypted bytes.
+     *
+     * @param input the buffer whose remaining bytes are decrypted.
+     * @return a byte buffer of decrypted bytes.
+     * @apiNote the result buffer will have no remaining, which means the caller should invoke {@link ByteBuffer#flip()}
+     * ont the result.
+     */
     ByteBuffer decrypt(final ByteBuffer input) {
         assert input != null;
         init(Cipher.DECRYPT_MODE);
@@ -77,9 +96,9 @@ public final class FullTextSecurity {
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-    private Cipher cipher;
+    private final Cipher cipher;
 
-    private Key key;
+    private final Key key;
 
-    private AlgorithmParameterSpec params;
+    private final AlgorithmParameterSpec params;
 }
