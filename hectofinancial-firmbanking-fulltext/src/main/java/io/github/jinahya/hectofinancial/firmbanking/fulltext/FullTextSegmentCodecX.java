@@ -45,6 +45,10 @@ class FullTextSegmentCodecX
     @Override
     String decode(final byte[] encoded) {
         assert encoded != null;
-        return new String(encoded, CHARSET).stripTrailing();
+        final var decoded = new String(encoded, CHARSET).stripTrailing();
+        if (decoded.isBlank()) {
+            return null;
+        }
+        return decoded;
     }
 }

@@ -178,7 +178,7 @@ public class FullText {
     }
 
     /**
-     * Applies the section of specified index to specified function, and return the result.
+     * Applies this text's section of specified index to specified function, and return the result.
      * <p>
      * {@snippet lang = java:
      * var date = applySection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
@@ -208,7 +208,7 @@ public class FullText {
     }
 
     /**
-     * Accepts the section of specified index to specified consumer.
+     * Accepts this text's section of specified index to specified consumer.
      * <p>
      * {@snippet lang = java:
      * acceptSection(FullTextConstants.SECTION_INDEX_HEAD, s -> {
@@ -233,8 +233,8 @@ public class FullText {
     }
 
     /**
-     * Applies the {@link FullTextConstants#SECTION_INDEX_HEAD head} section to specified function, and returns the
-     * result.
+     * Applies this text's {@link FullTextConstants#SECTION_INDEX_HEAD head} section to specified function, and returns
+     * the result.
      *
      * @param function the function.
      * @param <R>      result type parameter
@@ -247,7 +247,7 @@ public class FullText {
     }
 
     /**
-     * Accepts the {@link FullTextConstants#SECTION_INDEX_HEAD head} section to specified consumer.
+     * Accepts this text's {@link FullTextConstants#SECTION_INDEX_HEAD head} section to specified consumer.
      *
      * @param consumer the consumer.
      * @see #applyHeadSection(Function)
@@ -257,8 +257,8 @@ public class FullText {
     }
 
     /**
-     * Applies the {@link FullTextConstants#SECTION_INDEX_BODY body} section to specified function, and returns the
-     * result.
+     * Applies this text's {@link FullTextConstants#SECTION_INDEX_BODY body} section to specified function, and returns
+     * the result.
      *
      * @param function the function.
      * @param <R>      result type parameter
@@ -271,7 +271,7 @@ public class FullText {
     }
 
     /**
-     * Accepts the {@link FullTextConstants#SECTION_INDEX_BODY body} section to specified consumer.
+     * Accepts this text's {@link FullTextConstants#SECTION_INDEX_BODY body} section to specified consumer.
      *
      * @param consumer the consumer.
      * @see #applyBodySection(Function)
