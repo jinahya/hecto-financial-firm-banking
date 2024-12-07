@@ -42,23 +42,6 @@ class FullTextSegment {
                 '}';
     }
 
-    @Override
-    public boolean equals(final Object obj) {
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        final var that = (FullTextSegment) obj;
-        return offset == that.offset &&
-                length == that.length &&
-                Objects.equals(codec, that.codec) &&
-                Objects.equals(tag, that.tag);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(offset, length, codec, tag);
-    }
-
     // -----------------------------------------------------------------------------------------------------------------
     <V> V getValue(final ByteBuffer data) {
         assert data != null;

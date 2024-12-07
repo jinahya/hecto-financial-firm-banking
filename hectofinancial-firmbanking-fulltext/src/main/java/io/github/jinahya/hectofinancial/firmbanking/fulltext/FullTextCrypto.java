@@ -12,7 +12,7 @@ import java.util.Objects;
  * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
  * @see FullText#setCrypto(FullTextCrypto)
  */
-public class FullTextCrypto {
+public final class FullTextCrypto {
 
     // ------------------------------------------------------------------------------------------ STATIC_FACTORY_METHODS
 

@@ -35,7 +35,7 @@ class FullTextSegmentCodecXTest
         final var decoded = "홍길동";
         final var encoded = newCodecInstance().encode(decoded, 10);
         log.debug("encoded: {}", encoded);
-        assertThat(new String(encoded, FullTextSegmentCodecX.CHARSET)).isEqualTo("홍길동    ");
+        assertThat(new String(encoded, FullTextConstants.CHARSET)).isEqualTo("홍길동    ");
     }
 
     @Test
@@ -53,7 +53,7 @@ class FullTextSegmentCodecXTest
         final int length = 9;
         final byte[] encoded = newCodecInstance().encode(decoded, length);
         log.debug("encoded: {}", encoded);
-        assertThat(encoded).isEqualTo(decoded.getBytes(FullTextSegmentCodecX.CHARSET));
+        assertThat(encoded).isEqualTo(decoded.getBytes(FullTextConstants.CHARSET));
         assertThat(newCodecInstance().decode(encoded)).isEqualTo(decoded);
     }
 
@@ -74,7 +74,7 @@ class FullTextSegmentCodecXTest
         final int length = 4;
         final byte[] encoded = newCodecInstance().encode(decoded, length);
         log.debug("encoded: {}", encoded);
-        assertThat(encoded).isEqualTo(decoded.getBytes(FullTextSegmentCodecX.CHARSET));
+        assertThat(encoded).isEqualTo(decoded.getBytes(FullTextConstants.CHARSET));
         assertThat(newCodecInstance().decode(encoded)).isEqualTo(decoded);
     }
 
@@ -85,7 +85,7 @@ class FullTextSegmentCodecXTest
         final int length = 3;
         final byte[] encoded = newCodecInstance().encode(decoded, length);
         log.debug("encoded: {}", encoded);
-        assertThat(encoded).isEqualTo(decoded.getBytes(FullTextSegmentCodecX.CHARSET));
+        assertThat(encoded).isEqualTo(decoded.getBytes(FullTextConstants.CHARSET));
         assertThat(newCodecInstance().decode(encoded)).isEqualTo(decoded);
     }
 
@@ -96,7 +96,7 @@ class FullTextSegmentCodecXTest
         final int length = 4;
         final byte[] encoded = newCodecInstance().encode(decoded, length);
         log.debug("encoded: {}", encoded);
-        assertThat(encoded).isEqualTo(decoded.getBytes(FullTextSegmentCodecX.CHARSET));
+        assertThat(encoded).isEqualTo(decoded.getBytes(FullTextConstants.CHARSET));
         assertThat(newCodecInstance().decode(encoded)).isEqualTo(decoded);
     }
 }

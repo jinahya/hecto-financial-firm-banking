@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -17,11 +18,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 class FullTextCategory_Test {
 
-    @EnumSource(FullTextCategory.class)
-    @ParameterizedTest
-    void getHeadDate_NumberFormatException_(final FullTextCategory category) {
-        final var headSection = FullTextSection.newHeadInstance(category);
-        assertThat(category.getHeadDate(headSection)).isNull();
+    @Nested
+    class GetHeadDateTest {
+
+        @EnumSource(FullTextCategory.class)
+        @ParameterizedTest
+        void getHeadDate_NumberFormatException_(final FullTextCategory category) {
+            final var headSection = FullTextSection.newHeadInstance(category);
+            assertThat(category.getHeadDate(headSection)).isNull();
+        }
     }
 
     @EnumSource(FullTextCategory.class)

@@ -20,15 +20,17 @@ public final class FullTextUtils {
     private static final FullTextSegmentCodec<Integer> LENGTH_CODEC = FullTextSegmentCodec.of9();
 
     /**
-     * Writes specified length to specified channel.
+     * Writes specified value of {@code length} to specified channel.
      *
      * @param channel the channel.
-     * @param length  the value to write.
+     * @param length  the value of {@code length} to write.
      * @throws IOException if an I/O error occurs.
      * @see #readLength(ReadableByteChannel)
      */
     public static void writeLength(final WritableByteChannel channel, final int length) throws IOException {
-        Objects.requireNonNull(channel, "channel is null");
+        if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
+            throw new IllegalArgumentException("chanel is not open");
+        }
         if (length <= 0) {
             throw new IllegalArgumentException("length(" + length + ") is not positive");
         }
@@ -47,7 +49,9 @@ public final class FullTextUtils {
      * @see #writeLength(WritableByteChannel, int)
      */
     public static int readLength(final ReadableByteChannel channel) throws IOException {
-        Objects.requireNonNull(channel, "channel is null");
+        if (!Objects.requireNonNull(channel, "channel is null").isOpen()) {
+            throw new IllegalArgumentException("chanel is not open");
+        }
         final var a = new byte[LENGTH_BYTES];
         for (final var b = ByteBuffer.wrap(a); b.hasRemaining(); ) {
             if (channel.read(b) == -1) {

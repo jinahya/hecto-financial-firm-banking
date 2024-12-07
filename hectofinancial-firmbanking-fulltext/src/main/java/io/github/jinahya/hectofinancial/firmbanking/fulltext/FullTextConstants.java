@@ -1,6 +1,27 @@
 package io.github.jinahya.hectofinancial.firmbanking.fulltext;
 
+import java.nio.charset.Charset;
+import java.time.format.DateTimeFormatter;
+
+/**
+ * Constants for {@link FullText}.
+ *
+ * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
+ */
 public final class FullTextConstants {
+
+    // -----------------------------------------------------------------------------------------------------------------
+
+    /**
+     * The default charset name for the {@link FullText}.
+     */
+
+    static final String CHARSET_NAME = "euc-kr";
+
+    /**
+     * The default charset for the {@link FullText}.
+     */
+    static final Charset CHARSET = Charset.forName(CHARSET_NAME);
 
     // --------------------------------------------------------------------------------------------------------------- D
     static final int SEGMENT_OFFSET_TEXT_CODE_D = 24;
@@ -32,6 +53,15 @@ public final class FullTextConstants {
     public static final int SECTION_INDEX_HEAD = 1;
 
     public static final int SECTION_INDEX_BODY = SECTION_INDEX_HEAD + 1;
+
+    // -----------------------------------------------------------------------------------------------------------------
+    private static final String DATE_TIME_PATTERN_DATE = "uuuuMMdd";
+
+    static final DateTimeFormatter DATE_TIME_FORMATTER_DATE = DateTimeFormatter.ofPattern(DATE_TIME_PATTERN_DATE);
+
+    private static final String DATE_TIME_PATTERN_TIME = "HHmmss";
+
+    static final DateTimeFormatter DATE_TIME_FORMATTER_TIME = DateTimeFormatter.ofPattern(DATE_TIME_PATTERN_TIME);
 
     // -----------------------------------------------------------------------------------------------------------------
     private FullTextConstants() {

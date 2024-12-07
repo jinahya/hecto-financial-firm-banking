@@ -13,6 +13,12 @@ class FullTextSegmentCodec9
     private static final int RADIX = 10;
 
     // -----------------------------------------------------------------------------------------------------------------
+    static String format(final int length, final int value) {
+        final var format = String.format("%%1$0%1$dd", length);
+        return String.format(format, value);
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
     FullTextSegmentCodec9() {
         super();
     }
@@ -21,8 +27,7 @@ class FullTextSegmentCodec9
     private byte[] encode_(final int decoded, final int length) {
         assert decoded >= 0;
         assert length > 0;
-        final var format = String.format("%%1$0%1$dd", length);
-        final var bytes = String.format(format, decoded).getBytes(CHARSET);
+        final var bytes = format(length, decoded).getBytes(CHARSET);
         if (bytes.length > length) {
             throw new IllegalArgumentException("decoded.bytes.length(" + bytes.length + ") > length(" + length + ")");
         }

@@ -4,71 +4,59 @@ import java.nio.ByteBuffer;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+/**
+ * An enum for discriminating {@code 실시간펌뱅킹} and {@code 실시간펌뱅킹(외화)}.
+ *
+ * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
+ */
 public enum FullTextCategory {
 
     /**
      * The value for the {@code 실시간펌뱅킹}
      */
     D(FullTextConstants.SEGMENT_OFFSET_TEXT_CODE_D, FullTextConstants.SEGMENT_LENGTH_TEXT_CODE_D,
-      FullTextConstants.SEGMENT_OFFSET_TASK_CODE_D, FullTextConstants.SEGMENT_LENGTH_TASK_CODE_D) { // @formatter:off
-        @Override LocalDate getHeadDate(final FullTextSection headSection) {
-            return headSection.getDate(FullTextConstants.SEGMENT_INDEX_HEAD_DATE_D);
-        }
-        @Override void setHeadDate(final FullTextSection headSection, final LocalDate headDate) {
-            headSection.setDate(FullTextConstants.SEGMENT_INDEX_HEAD_DATE_D, headDate);
-        }
-        @Override LocalTime getHeadTime(final FullTextSection headSection) {
-            return headSection.getTime(FullTextConstants.SEGMENT_INDEX_HEAD_TIME_D);
-        }
-        @Override void setHeadTime(final FullTextSection headSection, final LocalTime headTime) {
-            headSection.setTime(FullTextConstants.SEGMENT_INDEX_HEAD_TIME_D, headTime);
-        } // @formatter:on
-    },
+      FullTextConstants.SEGMENT_OFFSET_TASK_CODE_D, FullTextConstants.SEGMENT_LENGTH_TASK_CODE_D,
+      FullTextConstants.SEGMENT_INDEX_HEAD_DATE_D, FullTextConstants.SEGMENT_INDEX_HEAD_TIME_D),
 
     /**
      * The value for the {@code 실시간펌뱅킹(외화)}
      */
     F(FullTextConstants.SEGMENT_OFFSET_TEXT_CODE_F, FullTextConstants.SEGMENT_LENGTH_TEXT_CODE_F,
-      FullTextConstants.SEGMENT_OFFSET_TASK_CODE_F, FullTextConstants.SEGMENT_LENGTH_TASK_CODE_F) { // @formatter:off
-        @Override LocalDate getHeadDate(final FullTextSection headSection) {
-            return headSection.getDate(FullTextConstants.SEGMENT_INDEX_HEAD_DATE_F);
-        }
-        @Override void setHeadDate(final FullTextSection headSection, final LocalDate headDate) {
-            headSection.setDate(FullTextConstants.SEGMENT_INDEX_HEAD_DATE_F, headDate);
-        }
-        @Override LocalTime getHeadTime(final FullTextSection headSection) {
-            return headSection.getTime(FullTextConstants.SEGMENT_INDEX_HEAD_TIME_F);
-        }
-        @Override void setHeadTime(final FullTextSection headSection, final LocalTime headTime) {
-            headSection.setTime(FullTextConstants.SEGMENT_INDEX_HEAD_TIME_F, headTime);
-        } // @formatter:on
-    };
+      FullTextConstants.SEGMENT_OFFSET_TASK_CODE_F, FullTextConstants.SEGMENT_LENGTH_TASK_CODE_F,
+      FullTextConstants.SEGMENT_INDEX_HEAD_DATE_F, FullTextConstants.SEGMENT_INDEX_HEAD_TIME_F);
 
     // ---------------------------------------------------------------------------------------------------- CONSTRUCTORS
-    FullTextCategory(final int headTextCodeOffset, final int headTextCodeLength, final int headTaskCodeOffset,
-                     final int headTaskCodeLength) {
+    FullTextCategory(final int headTextCodeOffset, final int headTextCodeLength,
+                     final int headTaskCodeOffset, final int headTaskCodeLength,
+                     final int headDateSegmentIndex, final int headTimeSegmentIndex) {
         headTextCodeSegment = FullTextSegment.newInstanceOfX(headTextCodeOffset, headTextCodeLength, "headTextCode");
         headTaskCodeSegment = FullTextSegment.newInstanceOfX(headTaskCodeOffset, headTaskCodeLength, "headTaskCode");
+        this.headDateSegmentIndex = headDateSegmentIndex;
+        this.headTimeSegmentIndex = headTimeSegmentIndex;
     }
 
     // -------------------------------------------------------------------------------------------------------- headDate
+    LocalDate getHeadDate(final FullTextSection headSection) {
+        return headSection.getDate(headDateSegmentIndex);
+    }
 
-    /**
-     * Returns the value of {@code 전송일자} from specified head section.
-     *
-     * @param headSection the head section.
-     * @return the value of {@code 전송일자} from {@code headSection}; {@code null} when failed to parse.
-     */
-    abstract LocalDate getHeadDate(final FullTextSection headSection);
+    void setHeadDate(final FullTextSection headSection, final LocalDate headDate) {
+        headSection.setDate(headDateSegmentIndex, headDate);
+    }
 
-    abstract void setHeadDate(final FullTextSection headSection, final LocalDate headDate);
+    LocalTime getHeadTime(final FullTextSection headSection) {
+        return headSection.getTime(headTimeSegmentIndex);
+    }
 
-    // -------------------------------------------------------------------------------------------------------- headTime
-    abstract LocalTime getHeadTime(final FullTextSection headSection);
-
-    abstract void setHeadTime(final FullTextSection headSection, final LocalTime headTime);
+    void setHeadTime(final FullTextSection headSection, final LocalTime headTime) {
+        headSection.setTime(headTimeSegmentIndex, headTime);
+    } // @formatter:on
 
     // --------------------------------------------------------------------------------------------- headTextCodeSegment
+    FullTextSegment getHeadTextCodeSegment() {
+        return headTextCodeSegment;
+    }
+
     String getHeadTextCode(final ByteBuffer headData) {
         return headTextCodeSegment.getValue(headData);
     }
@@ -78,6 +66,10 @@ public enum FullTextCategory {
     }
 
     // --------------------------------------------------------------------------------------------- headTaskCodeSegment
+    FullTextSegment getHeadTaskCodeSegment() {
+        return headTaskCodeSegment;
+    }
+
     String getHeadTaskCode(final ByteBuffer headData) {
         return headTaskCodeSegment.getValue(headData);
     }
@@ -91,10 +83,14 @@ public enum FullTextCategory {
     /**
      * {@code 전문구분코드} segment.
      */
-    private final FullTextSegment headTextCodeSegment;
+    final FullTextSegment headTextCodeSegment;
 
     /**
      * {@code 업무구분코드} segment.
      */
-    private final FullTextSegment headTaskCodeSegment;
+    final FullTextSegment headTaskCodeSegment;
+
+    final int headDateSegmentIndex;
+
+    final int headTimeSegmentIndex;
 }

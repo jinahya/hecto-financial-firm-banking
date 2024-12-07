@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings({
         "java:S1192" // String literals should not be duplicated
 })
-public class FullText {
+public final class FullText {
 
     // ------------------------------------------------------------------------------------------ STATIC_FACTORY_METHODS
 
@@ -538,9 +538,9 @@ public class FullText {
     // ---------------------------------------------------------------------------------------------------------- crypto
 
     /**
-     * Sets specified crypto for this text.
+     * Sets specified crypto to this text.
      *
-     * @param crypto crypto for this text; {@code null} to clear.
+     * @param crypto the crypto to set; {@code null} to clear.
      */
     public void setCrypto(final FullTextCrypto crypto) {
         this.crypto = crypto;

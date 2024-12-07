@@ -14,10 +14,15 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+/**
+ * A class for binding {@code 고통부} and {@code 개별부}.
+ *
+ * @author Jin Kwon &lt;onacit_at_gmail.com&gt;
+ */
 @SuppressWarnings({
         "java:S100" // Method names should comply with a naming convention
 })
-public class FullTextSection {
+public final class FullTextSection {
 
     // ------------------------------------------------------------------------------------------ STATIC_FACTORY_METHODS
     // category -> textCode -> taskCode -> segments
@@ -113,35 +118,35 @@ public class FullTextSection {
         return index;
     }
 
+    private FullTextSegment getSegmentAt(final int index) {
+        return segments.get(requireValidIndex(index) - 1);
+    }
+
     public <T> T getValue(final int index) {
-        final var segment = segments.get(requireValidIndex(index) - 1);
+        final var segment = getSegmentAt(index);
         return segment.getValue(buffer);
     }
 
     public void setValue(final int index, final Object value) {
-        final var segment = segments.get(requireValidIndex(index) - 1);
+        final var segment = getSegmentAt(index);
         segment.setValue(buffer, value);
     }
 
-    /**
-     * Returns the value, of a segment of specified index, in {@code int}.
-     *
-     * @param index the index of the segment.
-     * @return the value of the segment of specified index in {@code int}.
-     */
-    Integer getInt(final int index) {
-        return this.<Integer>getValue(index);
-    }
-
-    /**
-     * Sets specified value of {@code int} to the segment of specified index.
-     *
-     * @param index the index of the segment.
-     * @param value new value for the segment.
-     */
-    void setInt(final int index, final Integer value) {
-        setValue(index, value);
-    }
+//    Integer getInteger(final int index) {
+//        return getValue(index);
+//    }
+//
+//    void setInteger(final int index, final Integer value) {
+//        setValue(index, value);
+//    }
+//
+//    Integer getIntegerString(final int index) {
+//        return getValue(index);
+//    }
+//
+//    void setIntegerString(final int index, final Integer value) {
+//        setValue(index, value);
+//    }
 
     /**
      * Returns the value of specified segment index as an instance of {@link LocalDate}.
@@ -151,9 +156,11 @@ public class FullTextSection {
      * @see #setDate(int, LocalDate)
      */
     public LocalDate getDate(final int index) {
-        return Optional.ofNullable(getValue(index))
-                .map(Objects::toString)
-                .map(v -> LocalDate.parse(v, FullTextSegmentCodecConstants.FORMATTER_DATE))
+        final var segment = getSegmentAt(index);
+        final Integer value = segment.getValue(buffer);
+        return Optional.ofNullable(value)
+                .map(v -> FullTextSegmentCodec9.format(segment.getLength(), v))
+                .map(v -> LocalDate.parse(v, FullTextConstants.DATE_TIME_FORMATTER_DATE))
                 .orElse(null);
     }
 
@@ -169,7 +176,7 @@ public class FullTextSection {
             setValue(index, null);
             return;
         }
-        setValue(index, FullTextSegmentCodecConstants.FORMATTER_DATE.format(value));
+        setValue(index, FullTextConstants.DATE_TIME_FORMATTER_DATE.format(value));
     }
 
     /**
@@ -180,9 +187,11 @@ public class FullTextSection {
      * @see #setTime(int, LocalTime)
      */
     public LocalTime getTime(final int index) {
-        return Optional.ofNullable(getValue(index))
-                .map(Objects::toString)
-                .map(v -> LocalTime.parse(v, FullTextSegmentCodecConstants.FORMATTER_TIME))
+        final var segment = getSegmentAt(index);
+        final Integer value = segment.getValue(buffer);
+        return Optional.ofNullable(value)
+                .map(v -> FullTextSegmentCodec9.format(segment.getLength(), v))
+                .map(v -> LocalTime.parse(v, FullTextConstants.DATE_TIME_FORMATTER_TIME))
                 .orElse(null);
     }
 
@@ -195,10 +204,10 @@ public class FullTextSection {
      */
     public void setTime(final int index, final LocalTime value) {
         if (value == null) {
-            setInt(index, null);
+            setValue(index, null);
             return;
         }
-        setValue(index, FullTextSegmentCodecConstants.FORMATTER_TIME.format(value));
+        setValue(index, FullTextConstants.DATE_TIME_FORMATTER_TIME.format(value));
     }
 
     // ---------------------------------------------------------------------------------------------------------- length
@@ -230,7 +239,7 @@ public class FullTextSection {
      * @return a string representation of this section.
      */
     public String getDataString() {
-        return FullTextSegmentCodecX.CHARSET.decode(buffer.clear()).toString();
+        return FullTextConstants.CHARSET.decode(buffer.clear()).toString();
     }
 
     ByteBuffer getData(final ByteBuffer dst) {

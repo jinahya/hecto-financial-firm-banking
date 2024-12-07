@@ -1,12 +1,9 @@
 package io.github.jinahya.hectofinancial.firmbanking.fulltext;
 
-import java.nio.charset.Charset;
 import java.util.Arrays;
 
 class FullTextSegmentCodecX
         extends FullTextSegmentCodec<String> {
-
-    static final Charset CHARSET = Charset.forName("euc-kr");
 
     // -----------------------------------------------------------------------------------------------------------------
     FullTextSegmentCodecX() {
@@ -19,7 +16,7 @@ class FullTextSegmentCodecX
         assert length > 0;
         final var encoded = new byte[length];
         {
-            final var bytes = decoded.stripTrailing().getBytes(CHARSET);
+            final var bytes = decoded.stripTrailing().getBytes(FullTextConstants.CHARSET);
             if (bytes.length > encoded.length) {
                 throw new IllegalArgumentException(
                         "decoded.bytes.length(" + bytes.length + ") > encoded.length(" + encoded.length + ")"
@@ -45,7 +42,7 @@ class FullTextSegmentCodecX
     @Override
     String decode(final byte[] encoded) {
         assert encoded != null;
-        final var decoded = new String(encoded, CHARSET).stripTrailing();
+        final var decoded = new String(encoded, FullTextConstants.CHARSET).stripTrailing();
         if (decoded.isBlank()) {
             return null;
         }
